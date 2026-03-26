@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: material-price-review
+    runtime: python
+    region: singapore
+    plan: starter
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: python -m streamlit run app.py --server.address 0.0.0.0 --server.port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PRICE_REVIEW_DATA_DIR
+        value: /opt/render/project/src/data
+    disk:
+      name: app-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

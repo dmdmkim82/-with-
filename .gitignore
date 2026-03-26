@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.streamlit/secrets.toml
+data/
+*.zip
+123.xlsx
+공유용_배포폴더_20260326_v2/
