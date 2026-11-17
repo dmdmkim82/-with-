@@ -5,76 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>가설 조명 조도 계산</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
-/* Layout: 왼쪽 입력 패널, 오른쪽 판정 패널, 그 아래 전체 폭으로 기준 원문. 입력 → 판정 → 근거 순서로 읽는다. */
+/* Layout: 사내 포털형 위젯 대시보드. 상단 바 아래 12열 카드 그리드
+   1행 판정 요약 · 법규 판정 · 실 조건 / 2행 입력 카드 2장 / 3행 계산 내역 · 판정 근거 / 4행 조명율표 / 5행 계산 방법.
+   사내 포털처럼 밝은 화면 하나로 통일한다(다크 테마 없음). */
 :root {
-  --bg: #f3f0f1;
-  --surface: #ffffff;
-  --surface-2: #f8f5f6;
-  --line: #e1dadd;
-  --line-strong: #c8bec3;
-  --fg: #1e191b;
-  --muted: #675d62;
-  --accent: #a01843;
-  --accent-fg: #ffffff;
-  --accent-soft: #f8e8ee;
-  --good: #17703f;
-  --good-soft: #e3f3e9;
-  --good-line: #a9d6bb;
-  --bad: #b23608;
-  --bad-soft: #fbe9df;
-  --bad-line: #eab99f;
-  --warn: #855600;
-  --warn-soft: #fbf0d3;
-  --font: "Pretendard Variable", Pretendard, "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --radius: 10px;
-  --shadow: 0 12px 32px rgba(60, 20, 35, .18), 0 2px 6px rgba(60, 20, 35, .10);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #171416;
-    --surface: #211d1f;
-    --surface-2: #292427;
-    --line: #3a3337;
-    --line-strong: #544a50;
-    --fg: #f2edef;
-    --muted: #aba1a6;
-    --accent: #f27a98;
-    --accent-fg: #2a0a14;
-    --accent-soft: #3b1d28;
-    --good: #66d196;
-    --good-soft: #163222;
-    --good-line: #2c6143;
-    --bad: #ff9a6e;
-    --bad-soft: #3c2014;
-    --bad-line: #7a4127;
-    --warn: #e6b84a;
-    --warn-soft: #382d10;
-    --shadow: 0 12px 32px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .40);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #171416;
-  --surface: #211d1f;
-  --surface-2: #292427;
-  --line: #3a3337;
-  --line-strong: #544a50;
-  --fg: #f2edef;
-  --muted: #aba1a6;
-  --accent: #f27a98;
-  --accent-fg: #2a0a14;
-  --accent-soft: #3b1d28;
-  --good: #66d196;
-  --good-soft: #163222;
-  --good-line: #2c6143;
-  --bad: #ff9a6e;
-  --bad-soft: #3c2014;
-  --bad-line: #7a4127;
-  --warn: #e6b84a;
-  --warn-soft: #382d10;
-    --shadow: 0 12px 32px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .40);
-  color-scheme: dark;
+  color-scheme: light;
+  --bg: #eef0f3;
+  --card: #ffffff;
+  --line: #dfe2e6;
+  --line-2: #c9cdd3;
+  --fg: #222428;
+  --fg-2: #4b4f56;
+  --muted: #868b93;
+  --red: #b0222a;
+  --red-dark: #8e1a21;
+  --red-soft: #fbeeee;
+  --link: #b2542b;
+  --blue: #3d5f94;
+  --blue-soft: #f2f5fa;
+  --bar: #5b6068;
+  --bar-fg: #ffffff;
+  --good: #1d7a47;
+  --good-soft: #e8f4ed;
+  --bad: #c2332b;
+  --bad-soft: #fcecea;
+  --warn: #9a5f00;
+  --shadow: 0 1px 3px rgba(20, 24, 30, .07);
+  --dock-shadow: 0 10px 28px rgba(20, 24, 30, .20), 0 2px 6px rgba(20, 24, 30, .10);
+  --font: "Noto Sans KR", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 4px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -88,327 +51,353 @@ body {
   word-break: keep-all;
   overflow-wrap: break-word;
 }
-h1, h2, h3, p, dl, dd, ul, fieldset, blockquote { margin: 0; padding: 0; }
+h1, h2, h3, p, dl, dd, ul, ol, fieldset, blockquote { margin: 0; padding: 0; }
 fieldset { border: 0; min-width: 0; }
 ul { list-style: none; }
-button, input { font: inherit; color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+a { color: inherit; }
 
-.app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-block: 28px calc(var(--dock-space, 200px) + 40px);
+/* ---------- 상단 바 ---------- */
+.topbar { background: var(--card); border-bottom: 1px solid var(--line); }
+.topbar-in {
+  max-width: 1320px; margin: 0 auto;
+  padding-block: 14px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px 28px;
 }
-.page-head { display: flex; flex-direction: column; gap: 6px; }
-.page-head h1 { font-size: 26px; line-height: 1.25; font-weight: 800; letter-spacing: -0.02em; text-wrap: balance; }
-.lede { color: var(--muted); max-width: 68ch; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-mark {
+  flex: none; width: 34px; height: 34px; border-radius: 6px;
+  display: grid; place-items: center;
+  background: var(--red); color: var(--bar-fg); font-weight: 700; font-size: 14px; letter-spacing: -0.02em;
+}
+.brand strong { display: block; font-size: 17px; font-weight: 700; line-height: 1.25; }
+.brand div span { display: block; font-size: 12px; color: var(--muted); }
+.gnb { display: flex; justify-content: center; gap: 4px 30px; flex-wrap: wrap; }
+.gnb a { text-decoration: none; font-size: 16px; font-weight: 700; color: var(--fg); padding: 4px 2px; border-bottom: 2px solid transparent; }
+.gnb a:hover { border-bottom-color: var(--red); }
+.gnb a:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; border-radius: 2px; }
+.today { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 759px) {
+  .topbar-in { grid-template-columns: minmax(0, 1fr) auto; }
+  .gnb { grid-column: 1 / -1; justify-content: flex-start; gap: 4px 20px; }
+  .gnb a { font-size: 14px; }
+}
 
-.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
-@media (min-width: 940px) {
-  .layout { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+/* ---------- 카드 그리드 ---------- */
+.portal {
+  max-width: 1320px; margin: 0 auto;
+  padding-block: 20px calc(var(--dock-space, 200px) + 40px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px;
+  align-items: start;
 }
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  min-width: 0;
+.portal > * { grid-column: span 12; min-width: 0; }
+@media (min-width: 760px) {
+  .c-sum, .c-law, .c-in1, .c-in2 { grid-column: span 6; }
 }
-.panel-title { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-.panel-title::before { content: ""; width: 3px; height: 15px; background: var(--accent); border-radius: 1px; }
-
-.group { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); }
-.group:first-of-type { padding-top: 0; border-top: 0; }
-.group-title { font-size: 13px; font-weight: 700; }
-.group-title small { font-weight: 500; color: var(--muted); font-size: 12px; }
-
-.fields { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
-.fields.two { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.field.wide { grid-column: 1 / -1; }
-.field > label, .seg-legend { font-size: 12px; color: var(--muted); font-weight: 600; }
-.field .state { color: var(--accent); font-weight: 700; }
-.inp {
-  display: flex; align-items: center;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--surface);
-  min-height: 42px;
+@media (min-width: 1100px) {
+  .c-sum { grid-column: span 4; }
+  .c-law { grid-column: span 5; }
+  .c-room { grid-column: span 3; }
+  .c-calc { grid-column: span 7; }
+  .c-basis { grid-column: span 5; }
 }
-.inp:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
-.inp input {
-  flex: 1 1 auto; min-width: 0; width: 100%;
-  border: 0; background: transparent; outline: 0;
-  padding: 8px 4px 8px 12px;
-  font-size: 15px; font-weight: 600;
-  font-variant-numeric: tabular-nums;
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 16px;
+  scroll-margin-top: 12px;
 }
-.inp input[readonly] { color: var(--muted); }
-.inp.ro { background: var(--surface-2); }
-.inp .unit { padding-right: 10px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.card-head h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.card-aside { font-size: 13px; color: var(--muted); text-align: right; }
+.sub-title { font-size: 14px; font-weight: 700; color: var(--fg-2); }
 .hint { font-size: 12px; color: var(--muted); }
-.linkbtn {
-  border: 0; background: none; padding: 0; cursor: pointer;
-  color: var(--accent); font-weight: 700; font-size: 12px; text-decoration: underline; text-underline-offset: 2px;
-}
-.linkbtn:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.warn { color: var(--warn) !important; font-weight: 700; }
 
-.seg-wrap { display: flex; flex-direction: column; gap: 6px; }
-.seg { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.seg.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.seg.c5 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.seg.c5 > label { grid-column: span 2; }
-.seg.c5 > label:nth-child(n+4) { grid-column: span 3; }
-@media (min-width: 520px) {
-  .seg.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .seg.c5 > label, .seg.c5 > label:nth-child(n+4) { grid-column: auto; }
+/* ---------- 판정 요약 (프로필 카드형) ---------- */
+.sum-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.sum-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--blue-soft); border: 1px solid var(--line);
+  display: grid; place-items: center; color: var(--blue);
 }
-.seg > label {
-  position: relative;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  min-height: 46px; padding: 6px 6px;
-  border: 1px solid var(--line-strong); border-radius: 8px;
-  background: var(--surface);
-  text-align: center; font-weight: 700; font-size: 13px; line-height: 1.25;
-  cursor: pointer;
-  overflow-wrap: anywhere;
-}
-.seg > label small { font-weight: 500; font-size: 11px; color: var(--muted); }
-.seg > label input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
-.seg > label.on { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
-.seg > label.on small { color: var(--accent-fg); opacity: .9; }
-.seg > label.focus { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-/* 결과 */
-.hero {
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  padding: 20px;
-  display: flex; flex-direction: column; gap: 14px;
-}
-.hero[data-state="pass"] { background: var(--good-soft); border-color: var(--good-line); }
-.hero[data-state="fail"] { background: var(--bad-soft); border-color: var(--bad-line); }
-.hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.hero-top > div { min-width: 0; }
-.hero-zone { font-size: 18px; font-weight: 800; overflow-wrap: anywhere; }
-.hero-sub { color: var(--muted); font-size: 13px; }
+.sum-icon svg { width: 26px; height: 26px; }
+.sum-zone { font-size: 19px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.sum-meta { font-size: 13px; color: var(--fg-2); }
 .verdict {
-  flex: none;
-  padding: 6px 14px; border-radius: 999px;
-  font-weight: 800; font-size: 15px; white-space: nowrap;
-  background: var(--surface); border: 1px solid var(--line-strong); color: var(--muted);
+  padding: 5px 13px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap;
+  background: #f1f2f4; color: var(--muted); border: 1px solid var(--line-2);
 }
-.hero[data-state="pass"] .verdict { background: var(--good); border-color: var(--good); color: var(--surface); }
-.hero[data-state="fail"] .verdict { background: var(--bad); border-color: var(--bad); color: var(--surface); }
-.hero-main { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.hero-lux { font-size: clamp(48px, 11vw, 68px); line-height: 1; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-.hero-lux .u { font-size: 0.34em; font-weight: 700; margin-left: 4px; letter-spacing: 0; }
-.hero-ratio { text-align: right; display: flex; flex-direction: column; }
-.hero-ratio strong { font-size: 26px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; }
-.hero-ratio span { font-size: 12px; color: var(--muted); font-weight: 600; }
-.meter { position: relative; height: 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line-strong); }
-.meter-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px; background: var(--muted); }
-.hero[data-state="pass"] .meter-fill { background: var(--good); }
-.hero[data-state="fail"] .meter-fill { background: var(--bad); }
-.meter-tick { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--fg); }
-.meter-scale { position: relative; height: 18px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.c-sum[data-state="pass"] .verdict { background: var(--good); border-color: var(--good); color: var(--bar-fg); }
+.c-sum[data-state="fail"] .verdict { background: var(--bad); border-color: var(--bad); color: var(--bar-fg); }
+.sum-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.sum-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.sum-label { font-size: 14px; font-weight: 700; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sum-label span { font-size: 12px; font-weight: 400; color: var(--muted); }
+.sum-big { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.sum-big b { font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+.sum-big small { font-size: 14px; font-weight: 700; }
+.sum-big em { font-style: normal; margin-left: 8px; font-size: 14px; font-weight: 700; color: var(--fg-2); }
+.sum-big.red b, .sum-big.red small { color: var(--red); }
+.meter { position: relative; height: 8px; border-radius: 4px; background: #e4e6e9; }
+.meter-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 4px; background: var(--muted); }
+.c-sum[data-state="pass"] .meter-fill { background: var(--good); }
+.c-sum[data-state="fail"] .meter-fill { background: var(--bad); }
+.meter-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); }
+.meter-scale { position: relative; height: 16px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .meter-scale span { position: absolute; top: 0; white-space: nowrap; }
 .meter-scale .s0 { left: 0; }
 .meter-scale .s1 { transform: translateX(-50%); color: var(--fg); font-weight: 700; }
 .meter-scale .s2 { right: 0; }
-.hero-note { font-size: 13px; }
+.btn-red, .btn-line {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 0 16px; border-radius: 2px;
+  font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.btn-red { background: var(--red); color: var(--bar-fg); border: 1px solid var(--red); }
+.btn-red:hover { background: var(--red-dark); border-color: var(--red-dark); }
+.btn-red[disabled] { opacity: .4; cursor: default; }
+.btn-line { background: var(--card); color: var(--fg); border: 1px solid var(--line-2); }
+.btn-line:hover { border-color: var(--fg-2); }
+.btn-red:focus-visible, .btn-line:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.sum-note { font-size: 13px; color: var(--fg-2); padding: 10px 12px; background: #f6f7f9; border-radius: 2px; }
 @media (prefers-reduced-motion: no-preference) { .meter-fill { transition: width .25s ease; } }
 
-.sub-title { font-size: 13px; font-weight: 700; }
-.block { display: flex; flex-direction: column; gap: 10px; }
-
-.laws { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-.law-row {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
-  padding: 12px 14px; border-top: 1px solid var(--line);
+/* ---------- 게시판형 목록 (법규 판정 · 판정 근거) ---------- */
+.board { display: flex; flex-direction: column; }
+.law-row, .check-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 14px; align-items: center;
+  padding: 7px 0;
 }
-.law-row .law-name { grid-column: 1 / -1; }
-@media (min-width: 520px) {
-  .law-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; }
-  .law-row .law-name { grid-column: auto; }
-  .law-row .law-lux { text-align: right; }
-}
-.law-row:first-child { border-top: 0; }
-.law-row > div { display: flex; flex-direction: column; min-width: 0; }
-.law-row strong { font-weight: 700; }
-.law-row span { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
-.law-lux { font-variant-numeric: tabular-nums; }
+.b-title { color: var(--link); font-size: 15px; font-weight: 500; min-width: 0; }
+.b-meta { font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.check-row { grid-template-columns: minmax(0, 1fr) auto; }
+.check-row .b-title { color: var(--fg-2); font-size: 14px; font-weight: 400; }
+.check-row .b-title b { font-weight: 700; color: var(--fg); }
+.board-split { border-top: 1px solid var(--line); padding-top: 8px; }
 .chip {
-  display: inline-block; min-width: 64px; text-align: center;
-  padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 800; white-space: nowrap;
-  border: 1px solid var(--line-strong); color: var(--muted); background: var(--surface-2);
+  display: inline-block; min-width: 58px; text-align: center;
+  padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+  border: 1px solid var(--line-2); color: var(--muted); background: #f6f7f9;
 }
-.law-row .chip { font-size: 13px; }
-.law-row[data-state="pass"] .chip { color: var(--good); background: var(--good-soft); border-color: var(--good-line); }
-.law-row[data-state="fail"] .chip { color: var(--bad); background: var(--bad-soft); border-color: var(--bad-line); }
+.law-row[data-state="pass"] .chip { color: var(--good); background: var(--good-soft); border-color: #b5dcc4; }
+.law-row[data-state="fail"] .chip { color: var(--bad); background: var(--bad-soft); border-color: #efbab5; }
+@media (max-width: 519px) {
+  .law-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .law-row .b-title { grid-column: 1 / -1; }
+}
 
-.tiles { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (min-width: 620px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.tile {
-  border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2);
-  padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0;
-}
-.tile.key { border-color: var(--accent); background: var(--surface); }
-.tile.key .tile-v { color: var(--accent); }
-.tile-k { font-size: 12px; color: var(--muted); font-weight: 600; }
-.tile-v { font-size: 20px; font-weight: 800; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.tile-v .u { font-size: 12px; font-weight: 700; margin-left: 2px; }
-.tile-v.sm { font-size: 16px; line-height: 1.55; white-space: nowrap; }
-.tile-s { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
-.tile-s.warn { color: var(--warn); font-weight: 700; }
-.btn {
-  margin-top: 6px; align-self: flex-start;
-  border: 1px solid var(--accent); background: var(--accent); color: var(--accent-fg);
-  border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
-}
-.btn[disabled] { opacity: .45; cursor: default; }
+/* ---------- 실 조건 ---------- */
+.kv { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.kv > div { display: flex; flex-direction: column; gap: 1px; padding: 10px 12px; background: #f6f7f9; border-radius: 2px; min-width: 0; }
+.kv dt { font-size: 12px; color: var(--muted); }
+.kv dd { font-size: 13px; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.kv dd b { font-size: 18px; font-weight: 700; color: var(--fg); }
+.kv dd small { display: block; font-size: 12px; color: var(--muted); }
 
-.calc { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 16px; padding-top: 16px; border-top: 1px dashed var(--line-strong); }
-.calc dt { color: var(--muted); font-size: 13px; white-space: nowrap; }
-.calc dd { font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.calc dd b { font-weight: 800; }
-
-/* 기준 원문 */
-.basis-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 940px) { .basis-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.law-card { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.law-card h3 { font-size: 15px; font-weight: 800; }
-.law-src { font-size: 12px; color: var(--muted); }
-.clause {
-  border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px;
-  display: flex; flex-direction: column; gap: 6px;
+/* ---------- 입력 ---------- */
+.group { display: flex; flex-direction: column; gap: 12px; }
+.group + .group { padding-top: 16px; border-top: 1px solid var(--line); }
+.fields { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+.fields.two { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field.wide { grid-column: 1 / -1; }
+.field > label, .seg-legend { font-size: 13px; color: var(--fg-2); font-weight: 500; }
+.state { color: var(--red); font-weight: 700; }
+.inp {
+  display: flex; align-items: center;
+  min-height: 38px; background: var(--card);
+  border: 1px solid var(--line-2); border-radius: 2px;
 }
-.clause.applied { border-color: var(--accent); background: var(--accent-soft); }
-.clause-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.clause-head b { font-weight: 800; }
-.tag { display: none; font-size: 11px; font-weight: 800; color: var(--accent-fg); background: var(--accent); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
-.clause.applied .tag { display: inline-block; }
-.clause blockquote { font-size: 13px; }
-.clause ol { margin: 4px 0 0; padding-left: 20px; font-size: 13px; font-variant-numeric: tabular-nums; }
-.clause .memo { font-size: 12px; color: var(--muted); }
-.checks { display: grid; gap: 8px 20px; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 940px) { .checks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.checks li { font-size: 13px; padding-left: 14px; position: relative; }
-.checks li::before { content: ""; position: absolute; left: 0; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
-.checks b { font-weight: 700; }
-.notes { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-.notes li b { font-weight: 800; }
-.foot { font-size: 12px; color: var(--muted); max-width: 90ch; }
+.inp:focus-within { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+.inp input, .inp select {
+  flex: 1 1 auto; min-width: 0; width: 100%;
+  border: 0; background: transparent; outline: 0; color: var(--fg);
+  padding: 7px 4px 7px 11px; font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums;
+}
+.inp select { cursor: pointer; }
+.inp select option, .inp select optgroup { color: var(--fg); background: var(--card); }
+.inp .unit { padding-right: 10px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.linkbtn {
+  align-self: flex-start; border: 0; background: none; padding: 0; cursor: pointer;
+  color: var(--red); font-weight: 700; font-size: 12px; text-decoration: underline; text-underline-offset: 2px;
+}
+.linkbtn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+/* 라디오 목록 (포털의 '댓글 유형' 라디오 형태) */
+.seg-wrap { display: flex; flex-direction: column; gap: 6px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.seg > label {
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 0; font-size: 14px; font-weight: 500; cursor: pointer; line-height: 1.35;
+}
+.seg > label::before {
+  content: ""; flex: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 1.5px solid #9aa0a8; background: var(--card);
+}
+.seg > label.on::before { border: 5px solid var(--red); }
+.seg > label small { font-size: 12px; font-weight: 400; color: var(--muted); }
+.seg > label input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.seg > label.focus { outline: 2px solid var(--red); outline-offset: 3px; border-radius: 2px; }
+/* 탭형 (입력 방식) */
+.seg.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line-2); border-radius: 2px; overflow: hidden; }
+.seg.tabs > label { flex-direction: column; justify-content: center; gap: 0; padding: 8px 8px; text-align: center; background: #f6f7f9; }
+.seg.tabs > label::before { display: none; }
+.seg.tabs > label + label { border-left: 1px solid var(--line-2); }
+.seg.tabs > label.on { background: var(--bar); color: var(--bar-fg); }
+.seg.tabs > label.on small { color: #e3e5e8; }
+.seg.tabs > label.focus { outline-offset: -3px; }
+
+/* ---------- 계산 내역 (일정 카드형) ---------- */
+.stats { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stat { display: flex; flex-direction: column; gap: 1px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; min-width: 0; }
+.stat-k { font-size: 12px; color: var(--muted); }
+.stat-v { font-size: 13px; font-weight: 700; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.stat-v b { font-size: 20px; color: var(--fg); }
+.stat-s { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.sched { display: flex; flex-direction: column; gap: 8px; }
+.sched li {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: center;
+  padding: 10px 14px; border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: 2px;
+}
+.s-key { font-size: 14px; font-weight: 700; color: var(--blue); }
+.s-val { font-size: 13px; color: var(--fg-2); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.s-val::before { content: "• "; color: var(--muted); }
+.s-val b { color: var(--fg); font-weight: 700; }
+@media (max-width: 519px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .sched li { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ---------- 판정 근거 (경조사 목록형) ---------- */
+.clause { border-bottom: 1px solid var(--line); }
+.clause:last-child { border-bottom: 0; }
+.clause summary {
+  list-style: none; cursor: pointer;
+  display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 9px 0;
+}
+.clause summary::-webkit-details-marker { display: none; }
+.clause summary:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.b-tag { font-size: 12px; color: var(--muted); }
+.b-text { font-size: 14px; color: var(--fg); min-width: 0; }
+.b-text::after { content: "  +"; color: var(--muted); font-weight: 400; white-space: pre; }
+.clause details[open] .b-text::after { content: "  −"; }
+.tag { visibility: hidden; font-size: 11px; font-weight: 700; color: var(--bar-fg); background: var(--red); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.clause.applied .tag { visibility: visible; }
+.clause.applied .b-text { color: var(--red); font-weight: 700; }
+.clause-body { display: flex; flex-direction: column; gap: 6px; padding: 0 0 12px 62px; font-size: 13px; color: var(--fg-2); }
+.clause-body ol { margin: 2px 0 0; padding-left: 20px; }
+.clause-body .memo { font-size: 12px; color: var(--muted); }
+.basis-src { font-size: 12px; color: var(--muted); padding-top: 6px; }
+@media (max-width: 519px) {
+  .clause summary { grid-template-columns: minmax(0, 1fr) auto; }
+  .b-tag { grid-column: 1 / -1; }
+  .clause-body { padding-left: 0; }
+}
+
+/* ---------- 조명율표 (달력 머리줄형) ---------- */
+.cu-wrap { overflow: auto; max-height: 460px; border: 1px solid var(--line); }
+.cu-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 760px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.cu-table th, .cu-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+.cu-table th { position: sticky; top: 0; z-index: 1; background: var(--bar); color: var(--bar-fg); font-weight: 500; }
+.cu-table th:nth-child(-n+3), .cu-table td:nth-child(-n+3) { text-align: left; }
+.cu-table th.col-on { background: var(--red); }
+.cu-table td.col-on { background: #f6f7f9; }
+.cu-table tr.on td { background: var(--red-soft); font-weight: 700; }
+.cu-table tr.on td.col-on { background: var(--red); color: var(--bar-fg); }
+.cu-pick {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-weight: 700; color: var(--link); text-decoration: underline; text-underline-offset: 2px;
+}
+.cu-pick:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+/* ---------- 계산 방법 ---------- */
+.notes { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--fg-2); }
+.notes li { padding-left: 12px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: .65em; width: 4px; height: 4px; background: var(--muted); }
+.notes b { color: var(--fg); }
+.foot { font-size: 12px; color: var(--muted); }
 
 @media (max-width: 479px) {
-  .panel { padding: 16px; }
-  .inp input { padding-left: 10px; }
+  .card { padding: 16px; }
+  .inp input, .inp select { padding-left: 9px; }
   .inp .unit { padding-right: 8px; }
   .inp input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   .inp input[type="number"]::-webkit-inner-spin-button,
   .inp input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .sum-grid { grid-template-columns: 1fr; }
 }
 
-.inp select {
-  flex: 1 1 auto; min-width: 0; width: 100%;
-  border: 0; background: transparent; outline: 0; color: inherit;
-  padding: 8px 4px 8px 12px;
-  font: inherit; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;
-  cursor: pointer;
-}
-.inp select option, .inp select optgroup { color: var(--fg); background: var(--surface); }
-
-/* 조명율표 */
-.cu-wrap { overflow: auto; max-height: 460px; border: 1px solid var(--line); border-radius: 8px; }
-.cu-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 760px; font-size: 13px; font-variant-numeric: tabular-nums; }
-.cu-table th, .cu-table td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-.cu-table th { position: sticky; top: 0; z-index: 1; background: var(--surface-2); font-weight: 700; color: var(--muted); }
-.cu-table th:nth-child(-n+3), .cu-table td:nth-child(-n+3) { text-align: left; }
-.cu-table th.col-on { color: var(--accent); }
-.cu-table td.col-on { background: var(--surface-2); }
-.cu-table tr.on td { background: var(--accent-soft); font-weight: 700; }
-.cu-table tr.on td.col-on { background: var(--accent); color: var(--accent-fg); }
-.cu-pick {
-  border: 0; background: none; padding: 0; cursor: pointer;
-  font: inherit; font-weight: 800; color: var(--accent);
-  text-decoration: underline; text-underline-offset: 2px;
-}
-.cu-table tr.on td.col-on .cu-pick { color: var(--accent-fg); }
-.cu-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
-
-/* 실시간 판정: 오른쪽 하단 고정 */
+/* ---------- 실시간 판정: 오른쪽 하단 고정 ---------- */
 .dock {
   position: fixed; z-index: 30;
   right: calc(20px + env(safe-area-inset-right, 0px));
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  width: 296px;
+  width: 300px;
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
   grid-template-areas: "v m" "l r" "g g" "w w" "f f";
   padding: 14px 16px;
-  background: var(--surface); color: var(--fg);
-  border: 1px solid var(--line-strong); border-radius: 14px;
-  box-shadow: var(--shadow);
+  background: var(--card); color: var(--fg);
+  border: 1px solid var(--line-2); border-top: 4px solid var(--muted); border-radius: var(--radius);
+  box-shadow: var(--dock-shadow);
 }
-.dock[data-state="pass"] { background: var(--good-soft); border-color: var(--good-line); }
-.dock[data-state="fail"] { background: var(--bad-soft); border-color: var(--bad-line); }
+.dock[data-state="pass"] { border-top-color: var(--good); }
+.dock[data-state="fail"] { border-top-color: var(--bad); }
 .dock-verdict {
   grid-area: v; justify-self: start;
-  padding: 4px 12px; border-radius: 999px; font-size: 15px; font-weight: 800; white-space: nowrap;
-  background: var(--surface-2); border: 1px solid var(--line-strong); color: var(--muted);
+  padding: 4px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap;
+  background: #f1f2f4; border: 1px solid var(--line-2); color: var(--muted);
 }
-.dock[data-state="pass"] .dock-verdict { background: var(--good); border-color: var(--good); color: var(--surface); }
-.dock[data-state="fail"] .dock-verdict { background: var(--bad); border-color: var(--bad); color: var(--surface); }
+.dock[data-state="pass"] .dock-verdict { background: var(--good); border-color: var(--good); color: var(--bar-fg); }
+.dock[data-state="fail"] .dock-verdict { background: var(--bad); border-color: var(--bad); color: var(--bar-fg); }
 .dock-more {
   grid-area: m; border: 0; background: none; padding: 2px 0; cursor: pointer;
-  color: var(--muted); font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px;
+  color: var(--fg-2); font-size: 12px; font-weight: 500; text-decoration: underline; text-underline-offset: 2px;
 }
-.dock-lux { grid-area: l; font-size: 34px; line-height: 1; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dock-lux { grid-area: l; font-size: 32px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dock-lux small { font-size: 13px; font-weight: 700; margin-left: 3px; letter-spacing: 0; }
 .dock-ratio { grid-area: r; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
-.dock-ratio b { font-size: 20px; line-height: 1.15; font-weight: 800; font-variant-numeric: tabular-nums; }
-.dock-ratio small { font-size: 11px; color: var(--muted); font-weight: 600; white-space: nowrap; }
-.dock-meter { grid-area: g; position: relative; height: 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line-strong); }
-.dock-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px; background: var(--muted); }
+.dock-ratio b { font-size: 19px; line-height: 1.15; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dock-ratio small { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.dock-meter { grid-area: g; position: relative; height: 6px; border-radius: 3px; background: #e4e6e9; }
+.dock-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 3px; background: var(--muted); }
 .dock[data-state="pass"] .dock-fill { background: var(--good); }
 .dock[data-state="fail"] .dock-fill { background: var(--bad); }
 .dock-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); }
 .dock-laws { grid-area: w; display: flex; flex-wrap: wrap; gap: 6px; }
 .dchip {
-  padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  background: var(--surface); border: 1px solid var(--line-strong); color: var(--muted);
+  padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums;
+  background: #f6f7f9; border: 1px solid var(--line-2); color: var(--muted);
 }
-.dchip[data-state="pass"] { color: var(--good); border-color: var(--good-line); }
-.dchip[data-state="fail"] { color: var(--bad); border-color: var(--bad-line); }
+.dchip[data-state="pass"] { color: var(--good); background: var(--good-soft); border-color: #b5dcc4; }
+.dchip[data-state="fail"] { color: var(--bad); background: var(--bad-soft); border-color: #efbab5; }
 .dock-foot { grid-area: f; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.dock-note { font-size: 12px; font-weight: 600; min-width: 0; }
+.dock-note { font-size: 12px; font-weight: 500; color: var(--fg-2); min-width: 0; }
 .dock-apply {
-  border: 1px solid var(--bad); background: var(--bad); color: var(--surface);
-  border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--red); background: var(--red); color: var(--bar-fg);
+  border-radius: 2px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
 }
-.dock-more:focus-visible, .dock-apply:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.dock-more:focus-visible, .dock-apply:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 @media (max-width: 639px) {
   .dock {
     left: 0; right: 0; bottom: 0; width: auto;
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: "v l r" "w w w" "f f f";
     gap: 6px 10px;
-    border-radius: 14px 14px 0 0; border-width: 1px 0 0;
+    border-radius: 0; border-width: 4px 0 0;
     padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   }
   .dock-more, .dock-meter { display: none; }
   .dock-lux { font-size: 28px; justify-self: end; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .dock { transition: background-color .2s ease, border-color .2s ease; }
+  .dock { transition: border-color .2s ease; }
   .dock-fill { transition: width .25s ease; }
   .dock.pulse { animation: dockPulse .45s ease; }
   @keyframes dockPulse { 0% { transform: scale(1); } 40% { transform: scale(1.035); } 100% { transform: scale(1); } }
@@ -416,282 +405,300 @@ button, input { font: inherit; color: inherit; }
 </style>
 </head>
 <body>
-<main class="app">
-  <header class="page-head">
-    <h1>가설 조명 조도 계산</h1>
-    <p class="lede">구역 조건과 가설 등기구를 입력하면 광속법으로 유지 평균조도를 계산하고, 산업안전보건법·화학물질관리법 조도 기준 만족 여부를 판정합니다.</p>
-  </header>
-
-  <div class="layout">
-    <!-- ================= 입력 ================= -->
-    <section class="panel" aria-labelledby="t-in">
-      <h2 class="panel-title" id="t-in">입력</h2>
-
-      <div class="group">
-        <div class="group-title">구역 조건</div>
-        <div class="fields">
-          <div class="field wide">
-            <label for="zoneName">구역명 (장소)</label>
-            <div class="inp"><input id="zoneName" type="text" value="전력구-1" autocomplete="off"></div>
-          </div>
-          <div class="field">
-            <label for="roomX">가로</label>
-            <div class="inp"><select id="roomX"></select><input id="roomX-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="가로 직접 입력" hidden><span class="unit">m</span></div>
-          </div>
-          <div class="field">
-            <label for="roomY">세로</label>
-            <div class="inp"><select id="roomY"></select><input id="roomY-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="세로 직접 입력" hidden><span class="unit">m</span></div>
-          </div>
-          <div class="field">
-            <label for="roomH">높이 (광원~작업면)</label>
-            <div class="inp"><select id="roomH"></select><input id="roomH-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="높이 직접 입력" hidden><span class="unit">m</span></div>
-          </div>
-        </div>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">lx</span>
+      <div>
+        <strong>가설 조명 조도 계산</strong>
+        <span>산업안전보건법 · 화학물질관리법 조도 판정</span>
       </div>
-
-      <div class="group">
-        <div class="group-title">적용 기준 <small>— 선택한 기준 중 가장 높은 조도로 판정</small></div>
-        <fieldset class="seg-wrap">
-          <legend class="seg-legend">산업안전보건법 · 작업 구분</legend>
-          <div class="seg c5" data-group="osh">
-            <label><input type="radio" name="osh" id="osh-path" value="path" checked>통로<small>75 lx</small></label>
-            <label><input type="radio" name="osh" id="osh-etc" value="etc">그 밖의 작업<small>75 lx</small></label>
-            <label><input type="radio" name="osh" id="osh-normal" value="normal">보통작업<small>150 lx</small></label>
-            <label><input type="radio" name="osh" id="osh-fine" value="fine">정밀작업<small>300 lx</small></label>
-            <label><input type="radio" name="osh" id="osh-ultra" value="ultra">초정밀작업<small>750 lx</small></label>
-          </div>
-        </fieldset>
-        <fieldset class="seg-wrap">
-          <legend class="seg-legend">화학물질관리법 · 유해화학물질 취급시설 구분</legend>
-          <div class="seg c2" data-group="chem">
-            <label><input type="radio" name="chem" id="chem-none" value="none">해당 없음<small>취급시설 아님</small></label>
-            <label><input type="radio" name="chem" id="chem-mfg" value="mfg" checked>제조·사용시설<small>충분한 조도 (수치 없음)</small></label>
-            <label><input type="radio" name="chem" id="chem-storeA" value="storeA">보관시설 · 급성·사고대비<small>75 lx</small></label>
-            <label><input type="radio" name="chem" id="chem-storeB" value="storeB">보관시설 · 만성·생태<small>유효한 조도 (수치 없음)</small></label>
-          </div>
-        </fieldset>
-        <div class="fields two">
-          <div class="field" id="qualField">
-            <label for="qualLux">화관법 판정값</label>
-            <div class="inp"><input id="qualLux" type="number" inputmode="decimal" min="0" step="5" value="75"><span class="unit">lx</span></div>
-            <span class="hint">고시에 수치가 없는 구분에 적용. 기본 75 lx는 보관시설 별표 1 수치를 준용한 값입니다.</span>
-          </div>
-          <div class="field">
-            <label for="siteLux">현장 관리기준 (선택)</label>
-            <div class="inp"><input id="siteLux" type="number" inputmode="decimal" min="0" step="5" value="" placeholder="미적용"><span class="unit">lx</span></div>
-            <span class="hint">발주처·사내 기준이 법정 기준보다 높을 때 입력.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="group-title">조명기구</div>
-        <fieldset class="seg-wrap">
-          <legend class="seg-legend">입력 방식</legend>
-          <div class="seg c2" data-group="mode">
-            <label><input type="radio" name="mode" id="mode-table" value="table" checked>조명율표에서 선택<small>등 타입 · 광속 · 조명률 자동</small></label>
-            <label><input type="radio" name="mode" id="mode-manual" value="manual">수동 입력<small>소비전력 · 광속 · 조명률 직접</small></label>
-          </div>
-        </fieldset>
-        <div class="fields" id="tableFields">
-          <div class="field wide">
-            <label for="lampSel">등 타입</label>
-            <div class="inp"><select id="lampSel"></select></div>
-            <span class="hint" id="lampInfo"></span>
-          </div>
-        </div>
-        <div class="fields" id="manualFields" hidden>
-          <div class="field wide">
-            <label for="manName">등 명칭</label>
-            <div class="inp"><input id="manName" type="text" value="" placeholder="예: LED 투광등 100W" autocomplete="off"></div>
-          </div>
-          <div class="field">
-            <label for="manW">1등 소비전력</label>
-            <div class="inp"><input id="manW" type="number" inputmode="decimal" min="0" step="1" value="100"><span class="unit">W</span></div>
-          </div>
-          <div class="field">
-            <label for="manF">1등 광속</label>
-            <div class="inp"><input id="manF" type="number" inputmode="decimal" min="0" step="10" value="11000"><span class="unit">lm</span></div>
-          </div>
-          <div class="field">
-            <label for="manCu">조명률</label>
-            <div class="inp"><input id="manCu" type="number" inputmode="decimal" min="0" max="1.5" step="0.01" value="0.70"></div>
-          </div>
-          <div class="field wide"><span class="hint" id="manHint"></span></div>
-        </div>
-        <div class="fields two">
-          <div class="field">
-            <label for="lampN">설치개수</label>
-            <div class="inp"><select id="lampN"></select><input id="lampN-c" class="combo-in" type="number" inputmode="numeric" min="0" step="1" aria-label="설치개수 직접 입력" hidden><span class="unit">개</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="group-title">보수율 <small>— 오염 정도에 따라 자동 적용, 변경 가능</small></div>
-        <fieldset class="seg-wrap">
-          <legend class="seg-legend">오염 정도</legend>
-          <div class="seg" data-group="dirt">
-            <label><input type="radio" name="dirt" id="dirt-clean" value="clean">청정<small>CR·마감 구역 0.80</small></label>
-            <label><input type="radio" name="dirt" id="dirt-normal" value="normal" checked>일반<small>실내 공사 0.70</small></label>
-            <label><input type="radio" name="dirt" id="dirt-dusty" value="dusty">분진 많음<small>골조·해체·용접 0.60</small></label>
-          </div>
-        </fieldset>
-        <div class="fields two">
-          <div class="field">
-            <label for="mf">보수율 <span class="state" id="mfState">(자동)</span></label>
-            <div class="inp"><input id="mf" type="number" inputmode="decimal" min="0" max="1" step="0.05" value="0.70"></div>
-            <button type="button" class="linkbtn" id="mfReset" hidden>자동값으로 되돌리기</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= 결과 ================= -->
-    <section class="panel" aria-labelledby="t-out">
-      <h2 class="panel-title" id="t-out">계산 결과</h2>
-
-      <div class="hero" id="hero" data-state="na">
-        <div class="hero-top">
-          <div>
-            <div class="hero-zone" id="outZone">–</div>
-            <div class="hero-sub" id="outSummary">–</div>
-          </div>
-          <span class="verdict" id="outVerdict">입력 확인</span>
-        </div>
-        <div class="hero-main">
-          <div class="hero-lux"><span id="outLux">–</span><span class="u">lx</span></div>
-          <div class="hero-ratio"><strong id="outRatio">–</strong><span>판정기준 대비</span></div>
-        </div>
-        <div>
-          <div class="meter" aria-hidden="true"><div class="meter-fill" id="meterFill"></div><div class="meter-tick" id="meterTick"></div></div>
-          <div class="meter-scale" aria-hidden="true"><span class="s0">0</span><span class="s1" id="meterReq"></span><span class="s2" id="meterMax"></span></div>
-        </div>
-        <p class="hero-note" id="outNote" aria-live="polite"></p>
-      </div>
-
-      <div class="block">
-        <div class="sub-title">법규 판정</div>
-        <div class="laws" id="lawRows"></div>
-      </div>
-
-      <div class="block">
-        <div class="sub-title">실 조건</div>
-        <div class="tiles">
-          <div class="tile"><span class="tile-k">넓이</span><span class="tile-v"><span id="outArea">–</span><span class="u">m²</span></span><span class="tile-s">가로 × 세로</span></div>
-          <div class="tile"><span class="tile-k">실지수</span><span class="tile-v" id="outK">–</span><span class="tile-s" id="outGrade">X·Y ÷ H(X+Y)</span></div>
-          <div class="tile"><span class="tile-k">반사율 천장/벽/바닥</span><span class="tile-v sm" id="outRefl">–</span><span class="tile-s" id="outReflName">–</span></div>
-          <div class="tile"><span class="tile-k">등 간격 (추정)</span><span class="tile-v"><span id="outSpace">–</span><span class="u">m</span></span><span class="tile-s" id="outSpaceNote">–</span></div>
-        </div>
-      </div>
-
-      <div class="block">
-        <div class="sub-title">조명 계수 · 결과</div>
-        <div class="tiles">
-          <div class="tile key"><span class="tile-k">조명률</span><span class="tile-v"><span id="outCu">–</span><span class="u">%</span></span><span class="tile-s" id="outCuNote">–</span></div>
-          <div class="tile"><span class="tile-k">보수율</span><span class="tile-v"><span id="outMf">–</span><span class="u">%</span></span><span class="tile-s" id="outMfNote">–</span></div>
-          <div class="tile"><span class="tile-k">총 광속</span><span class="tile-v"><span id="outFlux">–</span><span class="u">lm</span></span><span class="tile-s" id="outFluxNote">–</span></div>
-          <div class="tile key"><span class="tile-k">필요개수</span><span class="tile-v"><span id="outNeed">–</span><span class="u">개</span></span><span class="tile-s" id="outNeedNote">–</span><button type="button" class="btn" id="applyNeed">이 개수로 적용</button></div>
-        </div>
-      </div>
-
-      <dl class="calc">
-        <dt>실지수</dt><dd id="fK">–</dd>
-        <dt>조명률</dt><dd id="fCu">–</dd>
-        <dt>계산조도</dt><dd id="fE">–</dd>
-        <dt>필요개수</dt><dd id="fN">–</dd>
-        <dt>가설 전원</dt><dd id="fP">–</dd>
-      </dl>
-    </section>
+    </div>
+    <nav class="gnb" aria-label="바로가기">
+      <a href="#sec-input">입력</a>
+      <a href="#t-out">계산 내역</a>
+      <a href="#sec-table">조명율표</a>
+      <a href="#sec-basis">판정 근거</a>
+    </nav>
+    <span class="today" id="today"></span>
   </div>
+</header>
 
-  <!-- ================= 조명율표 ================= -->
-  <section class="panel" aria-labelledby="t-cu">
-    <div class="block">
-      <h2 class="panel-title" id="t-cu">조명율표</h2>
-      <p class="hint">반사율 천장 70% · 벽 50% · 바닥 20% 기준. 열은 실지수(기호)입니다. 기호를 누르면 그 등 타입으로 계산하고, 선택한 등의 행과 지금 적용 중인 실지수 열을 강조합니다.</p>
+<main class="portal">
+
+  <!-- ===== 1행: 판정 요약 · 법규 판정 · 실 조건 ===== -->
+  <article class="card c-sum" id="hero" data-state="na" aria-labelledby="outZone">
+    <div class="sum-top">
+      <div class="sum-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2V16h5v0c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg>
+      </div>
+      <div>
+        <h2 class="sum-zone" id="outZone">–</h2>
+        <p class="sum-meta" id="outSummary">–</p>
+      </div>
+      <span class="verdict" id="outVerdict">입력 확인</span>
     </div>
+    <div class="sum-grid">
+      <div class="sum-col">
+        <div class="sum-label">계산조도 <span>유지 평균조도</span></div>
+        <div class="sum-big"><b id="outLux">–</b><small>lx</small><em id="outRatio">–</em></div>
+        <div class="meter" aria-hidden="true"><div class="meter-fill" id="meterFill"></div><div class="meter-tick" id="meterTick"></div></div>
+        <div class="meter-scale" aria-hidden="true"><span class="s0">0</span><span class="s1" id="meterReq"></span><span class="s2" id="meterMax"></span></div>
+        <a class="btn-line" href="#t-out">계산 내역 보기</a>
+      </div>
+      <div class="sum-col">
+        <div class="sum-label">필요개수 <span id="outNeedNote">–</span></div>
+        <div class="sum-big red"><b id="outNeed">–</b><small>개</small></div>
+        <button type="button" class="btn-red" id="applyNeed">이 개수로 적용</button>
+      </div>
+    </div>
+    <p class="sum-note" id="outNote" aria-live="polite"></p>
+  </article>
+
+  <article class="card c-law" aria-labelledby="t-law">
+    <div class="card-head"><h2 id="t-law">법규 판정</h2><span class="card-aside" id="govText"></span></div>
+    <ul class="board" id="lawRows"></ul>
+    <ul class="board board-split" aria-label="함께 점검할 조항">
+      <li class="check-row"><span class="b-title"><b>[점검]</b> 높이 2 m 이상 작업 시 안전한 조명 유지</span><span class="b-meta">안전보건규칙 제49조</span></li>
+      <li class="check-row"><span class="b-title"><b>[점검]</b> 임시 전등·가공매달기식 전등 보호망 부착</span><span class="b-meta">제309조</span></li>
+      <li class="check-row"><span class="b-title"><b>[점검]</b> 임시배선 이동형 기구 감전방지용 누전차단기</span><span class="b-meta">제304조</span></li>
+      <li class="check-row"><span class="b-title"><b>[점검]</b> 폭발위험장소 방폭구조 등기구 선정</span><span class="b-meta">제311조</span></li>
+      <li class="check-row"><span class="b-title"><b>[점검]</b> 명암 차이·눈부심이 심하지 않게 조명</span><span class="b-meta">제7조</span></li>
+    </ul>
+  </article>
+
+  <article class="card c-room" aria-labelledby="t-room">
+    <div class="card-head"><h2 id="t-room">실 조건</h2></div>
+    <dl class="kv">
+      <div><dt>넓이</dt><dd><b id="outArea">–</b> m²<small>가로 × 세로</small></dd></div>
+      <div><dt>실지수</dt><dd><b id="outK">–</b><small id="outGrade">X·Y ÷ H(X+Y)</small></dd></div>
+      <div><dt>반사율 천장/벽/바닥</dt><dd><b id="outRefl">–</b><small id="outReflName">–</small></dd></div>
+      <div><dt>등 간격 (추정)</dt><dd><b id="outSpace">–</b> m<small id="outSpaceNote">–</small></dd></div>
+    </dl>
+  </article>
+
+  <!-- ===== 2행: 입력 ===== -->
+  <section class="card c-in1" id="sec-input" aria-labelledby="t-in1">
+    <div class="card-head"><h2 id="t-in1">구역 · 적용 기준</h2></div>
+    <div class="group">
+      <div class="fields">
+        <div class="field wide">
+          <label for="zoneName">구역명 (장소)</label>
+          <div class="inp"><input id="zoneName" type="text" value="전력구-1" autocomplete="off"></div>
+        </div>
+        <div class="field">
+          <label for="roomX">가로</label>
+          <div class="inp"><select id="roomX"></select><input id="roomX-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="가로 직접 입력" hidden><span class="unit">m</span></div>
+        </div>
+        <div class="field">
+          <label for="roomY">세로</label>
+          <div class="inp"><select id="roomY"></select><input id="roomY-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="세로 직접 입력" hidden><span class="unit">m</span></div>
+        </div>
+        <div class="field">
+          <label for="roomH">설치높이</label>
+          <div class="inp"><select id="roomH"></select><input id="roomH-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="설치높이 직접 입력" hidden><span class="unit">m</span></div>
+        </div>
+        <div class="field wide"><span class="hint">목록에 없는 치수는 드롭다운 맨 아래 「직접 입력…」으로 넣으면 목록에 추가됩니다. 설치높이는 광원에서 작업면까지입니다.</span></div>
+      </div>
+    </div>
+    <div class="group">
+      <fieldset class="seg-wrap">
+        <legend class="seg-legend">산업안전보건법 · 작업 구분</legend>
+        <div class="seg">
+          <label><input type="radio" name="osh" id="osh-path" value="path" checked>통로 <small>75 lx</small></label>
+          <label><input type="radio" name="osh" id="osh-etc" value="etc">그 밖의 작업 <small>75 lx</small></label>
+          <label><input type="radio" name="osh" id="osh-normal" value="normal">보통작업 <small>150 lx</small></label>
+          <label><input type="radio" name="osh" id="osh-fine" value="fine">정밀작업 <small>300 lx</small></label>
+          <label><input type="radio" name="osh" id="osh-ultra" value="ultra">초정밀작업 <small>750 lx</small></label>
+        </div>
+      </fieldset>
+      <fieldset class="seg-wrap">
+        <legend class="seg-legend">화학물질관리법 · 유해화학물질 취급시설 구분</legend>
+        <div class="seg">
+          <label><input type="radio" name="chem" id="chem-none" value="none">해당 없음</label>
+          <label><input type="radio" name="chem" id="chem-mfg" value="mfg" checked>제조·사용시설 <small>수치 없음</small></label>
+          <label><input type="radio" name="chem" id="chem-storeA" value="storeA">보관시설 급성·사고대비 <small>75 lx</small></label>
+          <label><input type="radio" name="chem" id="chem-storeB" value="storeB">보관시설 만성·생태 <small>수치 없음</small></label>
+        </div>
+      </fieldset>
+      <div class="fields two">
+        <div class="field" id="qualField">
+          <label for="qualLux">화관법 판정값</label>
+          <div class="inp"><input id="qualLux" type="number" inputmode="decimal" min="0" step="5" value="75"><span class="unit">lx</span></div>
+          <span class="hint">고시에 수치가 없는 구분에 적용. 기본 75 lx는 보관시설 별표 1 수치를 준용한 값입니다.</span>
+        </div>
+        <div class="field">
+          <label for="siteLux">현장 관리기준 (선택)</label>
+          <div class="inp"><input id="siteLux" type="number" inputmode="decimal" min="0" step="5" value="" placeholder="미적용"><span class="unit">lx</span></div>
+          <span class="hint">발주처·사내 기준이 법정 기준보다 높을 때 입력.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card c-in2" aria-labelledby="t-in2">
+    <div class="card-head"><h2 id="t-in2">조명기구 · 보수율</h2></div>
+    <div class="group">
+      <fieldset class="seg-wrap">
+        <legend class="seg-legend">입력 방식</legend>
+        <div class="seg tabs">
+          <label><input type="radio" name="mode" id="mode-table" value="table" checked>조명율표에서 선택<small>등 타입 · 광속 · 조명률 자동</small></label>
+          <label><input type="radio" name="mode" id="mode-manual" value="manual">수동 입력<small>소비전력 · 광속 · 조명률 직접</small></label>
+        </div>
+      </fieldset>
+      <div class="fields" id="tableFields">
+        <div class="field wide">
+          <label for="lampSel">등 타입</label>
+          <div class="inp"><select id="lampSel"></select></div>
+          <span class="hint" id="lampInfo"></span>
+        </div>
+      </div>
+      <div class="fields" id="manualFields" hidden>
+        <div class="field wide">
+          <label for="manName">등 명칭</label>
+          <div class="inp"><input id="manName" type="text" value="" placeholder="예: LED 투광등 100W" autocomplete="off"></div>
+        </div>
+        <div class="field">
+          <label for="manW">1등 소비전력</label>
+          <div class="inp"><input id="manW" type="number" inputmode="decimal" min="0" step="1" value="100"><span class="unit">W</span></div>
+        </div>
+        <div class="field">
+          <label for="manF">1등 광속</label>
+          <div class="inp"><input id="manF" type="number" inputmode="decimal" min="0" step="10" value="11000"><span class="unit">lm</span></div>
+        </div>
+        <div class="field">
+          <label for="manCu">조명률</label>
+          <div class="inp"><input id="manCu" type="number" inputmode="decimal" min="0" max="1.5" step="0.01" value="0.70"></div>
+        </div>
+        <div class="field wide"><span class="hint" id="manHint"></span></div>
+      </div>
+      <div class="fields two">
+        <div class="field">
+          <label for="lampN">설치개수</label>
+          <div class="inp"><select id="lampN"></select><input id="lampN-c" class="combo-in" type="number" inputmode="numeric" min="0" step="1" aria-label="설치개수 직접 입력" hidden><span class="unit">개</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="group">
+      <fieldset class="seg-wrap">
+        <legend class="seg-legend">오염 정도 (보수율 자동 적용)</legend>
+        <div class="seg">
+          <label><input type="radio" name="dirt" id="dirt-clean" value="clean">청정 <small>CR·마감 구역 0.80</small></label>
+          <label><input type="radio" name="dirt" id="dirt-normal" value="normal" checked>일반 <small>실내 공사 0.70</small></label>
+          <label><input type="radio" name="dirt" id="dirt-dusty" value="dusty">분진 많음 <small>골조·해체·용접 0.60</small></label>
+        </div>
+      </fieldset>
+      <div class="fields two">
+        <div class="field">
+          <label for="mf">보수율 <span class="state" id="mfState">(자동)</span></label>
+          <div class="inp"><input id="mf" type="number" inputmode="decimal" min="0" max="1" step="0.05" value="0.70"></div>
+          <button type="button" class="linkbtn" id="mfReset" hidden>자동값으로 되돌리기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3행: 계산 내역 · 판정 근거 ===== -->
+  <article class="card c-calc" aria-labelledby="t-out">
+    <div class="card-head"><h2 id="t-out">계산 내역</h2><span class="card-aside">광속법 · 유지 평균조도</span></div>
+    <div class="stats">
+      <div class="stat"><span class="stat-k">조명률</span><span class="stat-v"><b id="outCu">–</b> %</span><span class="stat-s" id="outCuNote">–</span></div>
+      <div class="stat"><span class="stat-k">보수율</span><span class="stat-v"><b id="outMf">–</b> %</span><span class="stat-s" id="outMfNote">–</span></div>
+      <div class="stat"><span class="stat-k">총 광속</span><span class="stat-v"><b id="outFlux">–</b> lm</span><span class="stat-s" id="outFluxNote">–</span></div>
+    </div>
+    <ul class="sched">
+      <li><span class="s-key">실지수</span><span class="s-val" id="fK">–</span></li>
+      <li><span class="s-key">조명률</span><span class="s-val" id="fCu">–</span></li>
+      <li><span class="s-key">계산조도</span><span class="s-val" id="fE">–</span></li>
+      <li><span class="s-key">필요개수</span><span class="s-val" id="fN">–</span></li>
+      <li><span class="s-key">가설 전원</span><span class="s-val" id="fP">–</span></li>
+    </ul>
+  </article>
+
+  <section class="card c-basis" id="sec-basis" aria-labelledby="t-basis">
+    <div class="card-head"><h2 id="t-basis">판정 근거</h2><span class="card-aside">항목을 누르면 원문</span></div>
+    <ul class="board">
+      <li class="clause" data-clause="osh21">
+        <details>
+          <summary><span class="b-tag">산안법</span><span class="b-text">제21조(통로의 조명) 통로 75 lx 이상</span><span class="tag">적용 중</span></summary>
+          <div class="clause-body">
+            <blockquote>사업주는 근로자가 안전하게 통행할 수 있도록 통로에 75럭스 이상의 채광 또는 조명시설을 하여야 한다. 다만, 갱도 또는 상시 통행을 하지 아니하는 지하실 등을 통행하는 근로자에게 휴대용 조명기구를 사용하도록 한 경우에는 그러하지 아니하다.</blockquote>
+          </div>
+        </details>
+      </li>
+      <li class="clause" data-clause="osh8">
+        <details>
+          <summary><span class="b-tag">산안법</span><span class="b-text">제8조(조도) 초정밀 750 · 정밀 300 · 보통 150 · 그 밖 75 lx</span><span class="tag">적용 중</span></summary>
+          <div class="clause-body">
+            <blockquote>사업주는 근로자가 상시 작업하는 장소의 작업면 조도(照度)를 다음 각 호의 기준에 맞도록 하여야 한다. 다만, 갱내(坑內) 작업장과 감광재료(感光材料)를 취급하는 작업장은 그러하지 아니하다.
+              <ol>
+                <li>초정밀작업: 750럭스(lux) 이상</li>
+                <li>정밀작업: 300럭스 이상</li>
+                <li>보통작업: 150럭스 이상</li>
+                <li>그 밖의 작업: 75럭스 이상</li>
+              </ol>
+            </blockquote>
+          </div>
+        </details>
+      </li>
+      <li class="clause" data-clause="mfg">
+        <details>
+          <summary><span class="b-tag">화관법</span><span class="b-text">제조·사용시설 고시 제8조제8호 · 별표 1 8)-1 충분한 조도</span><span class="tag">적용 중</span></summary>
+          <div class="clause-body">
+            <blockquote>유해화학물질 제조ㆍ사용시설 및 그 밖의 공작물에는 유해화학물질을 취급하는데 필요한 채광 및 조명설비를 설치하여야 한다. 다만, 조명설비가 설치되어 유효하게 조도가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
+            <blockquote>세부기준 8)-1: 유해화학물질 유ㆍ누출 발생 시 대응이 가능하도록 충분한 조도 이상의 조명설비가 설치되어 유효하게 조도가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
+            <blockquote>세부기준 6)-1: 밸브 등을 조작하는 장소에 설치하여야 하는 조명의 조도는 유ㆍ누출 발생 시 대응이 가능하도록 충분한 조도 이상으로 한다.</blockquote>
+            <p class="memo">「유해화학물질 제조·사용시설 설치 및 관리에 관한 고시」. 확인본은 화학물질안전원고시 제2024-36호(시행 2024. 9. 30.)이며, 이후 개정 여부는 국가법령정보센터에서 확인하세요. 수치가 없는 정성 기준이므로 입력한 화관법 판정값으로 판정합니다.</p>
+          </div>
+        </details>
+      </li>
+      <li class="clause" data-clause="storeA">
+        <details>
+          <summary><span class="b-tag">화관법</span><span class="b-text">보관시설 고시 제6조제2호 · 별표 1 2)-1 75 lx 이상</span><span class="tag">적용 중</span></summary>
+          <div class="clause-body">
+            <blockquote>유해화학물질 보관시설에는 채광 및 조명설비를 갖추어야 한다. 다만, 조명설비가 설치되어 유효하게 조도(밝기)가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있으며, 유ㆍ누출 발생 시 대응이 가능하도록 비상 조명설비가 설치된 경우에는 필요한 조치를 마련한 것으로 본다.</blockquote>
+            <blockquote>세부기준 2)-1: 75 룩스(lux) 이상의 조명설비가 설치되어 유효하게 조도(밝기)가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
+            <p class="memo">「유해화학물질 보관시설 설치 및 관리에 관한 고시」 [시행 2025. 12. 5.] [화학물질안전원고시 제2025-29호]. 인체급성유해성물질·사고대비물질 보관시설에 적용합니다.</p>
+          </div>
+        </details>
+      </li>
+      <li class="clause" data-clause="storeB">
+        <details>
+          <summary><span class="b-tag">화관법</span><span class="b-text">보관시설 고시 제14조·제22조제2호 · 별표 2·3 유효한 조도</span><span class="tag">적용 중</span></summary>
+          <div class="clause-body">
+            <blockquote>세부기준 2)-1: 유해화학물질 유·누출 발생 시 대응이 가능하도록 조명 설비가 설치되어 유효하게 조도(밝기)가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
+            <p class="memo">같은 고시. 인체만성유해성·생태유해성물질 보관시설. 수치가 없는 정성 기준이므로 입력한 화관법 판정값으로 판정합니다.</p>
+          </div>
+        </details>
+      </li>
+    </ul>
+    <p class="basis-src">「산업안전보건기준에 관한 규칙」 [시행 2026. 3. 2.] [고용노동부령 제450호] · 화학물질관리법 제24조, 시행규칙 별표 5에 따른 화학물질안전원고시</p>
+  </section>
+
+  <!-- ===== 4행: 조명율표 ===== -->
+  <section class="card c-table" id="sec-table" aria-labelledby="t-cu">
+    <div class="card-head"><h2 id="t-cu">조명율표</h2><span class="card-aside">반사율 천장 70% · 벽 50% · 바닥 20%</span></div>
+    <p class="hint">열은 실지수(기호)입니다. 기호를 누르면 그 등 타입으로 계산하고, 선택한 등의 행과 적용 중인 실지수 열을 강조합니다. 원본 엑셀 「조명율표」 시트의 값이며, 값이 비어 있는 F4·F6은 제외했습니다.</p>
     <div class="cu-wrap"><table class="cu-table" id="cuTable"></table></div>
-    <p class="hint">원본 엑셀 「조명율표」 시트의 값을 옮겼습니다. 원본에 값이 비어 있는 F4·F6은 제외했습니다.</p>
   </section>
 
-  <!-- ================= 기준 원문 ================= -->
-  <section class="panel" aria-labelledby="t-basis">
-    <h2 class="panel-title" id="t-basis">판정 기준 근거</h2>
-    <div class="basis-grid">
-      <div class="law-card">
-        <h3>산업안전보건법</h3>
-        <p class="law-src">「산업안전보건기준에 관한 규칙」 [시행 2026. 3. 2.] [고용노동부령 제450호]</p>
-        <div class="clause" data-clause="osh8">
-          <div class="clause-head"><b>제8조(조도)</b><span class="tag">적용 중</span></div>
-          <blockquote>사업주는 근로자가 상시 작업하는 장소의 작업면 조도(照度)를 다음 각 호의 기준에 맞도록 하여야 한다. 다만, 갱내(坑內) 작업장과 감광재료(感光材料)를 취급하는 작업장은 그러하지 아니하다.
-            <ol>
-              <li>초정밀작업: 750럭스(lux) 이상</li>
-              <li>정밀작업: 300럭스 이상</li>
-              <li>보통작업: 150럭스 이상</li>
-              <li>그 밖의 작업: 75럭스 이상</li>
-            </ol>
-          </blockquote>
-        </div>
-        <div class="clause" data-clause="osh21">
-          <div class="clause-head"><b>제21조(통로의 조명)</b><span class="tag">적용 중</span></div>
-          <blockquote>사업주는 근로자가 안전하게 통행할 수 있도록 통로에 75럭스 이상의 채광 또는 조명시설을 하여야 한다. 다만, 갱도 또는 상시 통행을 하지 아니하는 지하실 등을 통행하는 근로자에게 휴대용 조명기구를 사용하도록 한 경우에는 그러하지 아니하다.</blockquote>
-        </div>
-      </div>
-
-      <div class="law-card">
-        <h3>화학물질관리법</h3>
-        <p class="law-src">법 제24조·시행규칙 별표 5에 따른 화학물질안전원고시 (유해화학물질 취급시설 설치 및 관리 기준)</p>
-        <div class="clause" data-clause="storeA">
-          <div class="clause-head"><b>보관시설 고시 제6조제2호 · 별표 1 2)-1 (인체급성유해성물질·사고대비물질)</b><span class="tag">적용 중</span></div>
-          <blockquote>유해화학물질 보관시설에는 채광 및 조명설비를 갖추어야 한다. 다만, 조명설비가 설치되어 유효하게 조도(밝기)가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있으며, 유ㆍ누출 발생 시 대응이 가능하도록 비상 조명설비가 설치된 경우에는 필요한 조치를 마련한 것으로 본다.</blockquote>
-          <blockquote>세부기준 2)-1: 75 룩스(lux) 이상의 조명설비가 설치되어 유효하게 조도(밝기)가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
-          <p class="memo">「유해화학물질 보관시설 설치 및 관리에 관한 고시」 [시행 2025. 12. 5.] [화학물질안전원고시 제2025-29호]. 조명만으로 조도를 확보하는 구역은 75 lx 이상을 수치 기준으로 판정합니다.</p>
-        </div>
-        <div class="clause" data-clause="storeB">
-          <div class="clause-head"><b>보관시설 고시 제14조·제22조제2호 · 별표 2·3 2)-1 (인체만성·생태유해성물질)</b><span class="tag">적용 중</span></div>
-          <blockquote>세부기준 2)-1: 유해화학물질 유·누출 발생 시 대응이 가능하도록 조명 설비가 설치되어 유효하게 조도(밝기)가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
-          <p class="memo">같은 고시. 수치가 없는 정성 기준이므로 입력한 화관법 판정값으로 판정합니다.</p>
-        </div>
-        <div class="clause" data-clause="mfg">
-          <div class="clause-head"><b>제조·사용시설 고시 제8조제8호 · 별표 1 8)-1, 6)-1</b><span class="tag">적용 중</span></div>
-          <blockquote>유해화학물질 제조ㆍ사용시설 및 그 밖의 공작물에는 유해화학물질을 취급하는데 필요한 채광 및 조명설비를 설치하여야 한다. 다만, 조명설비가 설치되어 유효하게 조도가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
-          <blockquote>세부기준 8)-1: 유해화학물질 유ㆍ누출 발생 시 대응이 가능하도록 충분한 조도 이상의 조명설비가 설치되어 유효하게 조도가 확보되는 건축물에는 채광설비를 갖추지 아니할 수 있다.</blockquote>
-          <blockquote>세부기준 6)-1: 밸브 등을 조작하는 장소에 설치하여야 하는 조명의 조도는 유ㆍ누출 발생 시 대응이 가능하도록 충분한 조도 이상으로 한다.</blockquote>
-          <p class="memo">「유해화학물질 제조·사용시설 설치 및 관리에 관한 고시」. 확인본은 화학물질안전원고시 제2024-36호(시행 2024. 9. 30.)이며, 이후 개정 여부는 국가법령정보센터에서 확인하세요. 수치가 없는 정성 기준이므로 입력한 화관법 판정값으로 판정합니다.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="block">
-      <div class="sub-title">가설 조명 설치 시 함께 확인할 조항 (안전보건규칙)</div>
-      <ul class="checks">
-        <li><b>제49조(조명의 유지)</b> 높이 2미터 이상에서 작업하는 경우 그 작업을 안전하게 하는 데에 필요한 조명을 유지.</li>
-        <li><b>제7조(채광 및 조명)</b> 명암의 차이가 심하지 않고 눈이 부시지 않은 방법으로 조명.</li>
-        <li><b>제309조(임시로 사용하는 전등 등의 위험 방지)</b> 임시 전등·가공매달기식 전등에는 감전과 전구 파손을 막는 보호망 부착.</li>
-        <li><b>제304조(누전차단기에 의한 감전방지)</b> 임시배선 전로에서 쓰는 이동형·휴대형 전기기계·기구에는 감전방지용 누전차단기 설치.</li>
-        <li><b>제311조(폭발위험장소 전기 기계·기구)</b> 가스·분진 폭발위험장소에는 방폭구조 등기구 선정.</li>
-      </ul>
-    </div>
-
-    <div class="block">
-      <div class="sub-title">계산 방법</div>
-      <ul class="notes">
-        <li><b>계산조도</b> = 설치개수 × 광속 × 조명률 × 보수율 ÷ 넓이. 법정 기준은 작업 중 항상 유지해야 하는 최소값이므로, 초기조도가 아니라 보수율을 반영한 유지조도로 판정합니다.</li>
-        <li><b>조명률</b>은 조명율표(천장 70%·벽 50%·바닥 20%)에서 선택한 등 타입의 행과 실지수 기호의 열을 찾아 씁니다. 기호별 열: A 5 · B 4 · C 3 · D 2.5 · E 2 · F 1.5 · G 1.25 · H 1 · I 0.75. 실지수 0.7 미만(J)은 표에 열이 없어 0.75 열 값을 쓰므로 조도가 실제보다 높게 계산될 수 있습니다.</li>
-        <li><b>광속(lm)</b>은 조명율표의 1등 광속값을 씁니다. 표에 없는 등은 수동 입력으로 명판 광속과 조명률을 넣으세요.</li>
-        <li><b>소비전력(W)</b>은 조도 계산에 들어가지 않고 가설 분전반 부하(소비전력·전류·분기회로 수) 산정에만 씁니다. 등타입 표기를 1등 기준으로 환산합니다(예: LED 13W*8 → 104 W).</li>
-        <li><b>보수율</b>은 가설 현장의 분진·오염·파손을 고려해 상설 조명(0.8~0.9)보다 낮은 0.6~0.8을 기본으로 둡니다.</li>
-      </ul>
-    </div>
+  <!-- ===== 5행: 계산 방법 ===== -->
+  <section class="card c-notes" aria-labelledby="t-notes">
+    <div class="card-head"><h2 id="t-notes">계산 방법</h2></div>
+    <ul class="notes">
+      <li><b>계산조도</b> = 설치개수 × 광속 × 조명률 × 보수율 ÷ 넓이. 법정 기준은 작업 중 항상 유지해야 하는 최소값이므로, 초기조도가 아니라 보수율을 반영한 유지조도로 판정합니다.</li>
+      <li><b>조명률</b>은 조명율표에서 선택한 등 타입의 행과 실지수 기호의 열을 찾아 씁니다. 기호별 열: A 5 · B 4 · C 3 · D 2.5 · E 2 · F 1.5 · G 1.25 · H 1 · I 0.75. 실지수 0.7 미만(J)은 표에 열이 없어 0.75 열 값을 쓰므로 조도가 실제보다 높게 계산될 수 있습니다.</li>
+      <li><b>광속(lm)</b>은 조명율표의 1등 광속값을 씁니다. 표에 없는 등은 수동 입력으로 명판 광속과 조명률을 넣으세요.</li>
+      <li><b>소비전력(W)</b>은 조도 계산에 들어가지 않고 가설 분전반 부하(소비전력·전류·분기회로 수) 산정에만 씁니다. 등타입 표기를 1등 기준으로 환산합니다(예: LED 17W*2 → 34 W).</li>
+      <li><b>보수율</b>은 가설 현장의 분진·오염·파손을 고려해 상설 조명(0.8~0.9)보다 낮은 0.6~0.8을 기본으로 둡니다.</li>
+    </ul>
+    <p class="foot">조명율표·보수율 기준표는 스크립트의 DATA 객체만 수정하면 됩니다. 계산값은 광속법에 의한 평균조도이므로, 설치 후에는 조도계로 작업면의 가장 어두운 지점을 실측해 기준 이상인지 확인하세요.</p>
   </section>
-
-  <p class="foot">조명율표·보수율 기준표는 스크립트의 DATA 객체만 수정하면 됩니다. 계산값은 광속법에 의한 평균조도이므로, 설치 후에는 조도계로 작업면의 가장 어두운 지점을 실측해 기준 이상인지 확인하세요.</p>
 </main>
 
 <aside class="dock" id="dock" data-state="na" aria-label="실시간 판정">
   <span class="dock-verdict" id="dockVerdict">입력 확인</span>
-  <button type="button" class="dock-more" id="dockMore">결과 상세</button>
+  <button type="button" class="dock-more" id="dockMore">계산 내역</button>
   <span class="dock-lux"><b id="dockLux">–</b><small>lx</small></span>
   <span class="dock-ratio"><b id="dockRatio">–</b><small>기준 <span id="dockCrit">–</span> lx 대비</small></span>
   <div class="dock-meter" aria-hidden="true"><div class="dock-fill" id="dockFill"></div><div class="dock-tick" id="dockTick"></div></div>
@@ -958,24 +965,16 @@ button, input { font: inherit; color: inherit; }
     }
   }
 
+  // 게시판형 판정 행: [법령] 근거 조항 · 기준 조도 · 판정
   function lawRow(state, law, ref, lux, kind, chip) {
-    var row = document.createElement('div');
-    row.className = 'law-row';
-    row.setAttribute('data-state', state);
-    var a = document.createElement('div');
-    a.className = 'law-name';
-    var a1 = document.createElement('strong'); a1.textContent = law;
-    var a2 = document.createElement('span'); a2.textContent = ref;
-    a.appendChild(a1); a.appendChild(a2);
-    var b = document.createElement('div');
-    b.className = 'law-lux';
-    var b1 = document.createElement('strong'); b1.textContent = lux;
-    var b2 = document.createElement('span'); b2.textContent = kind;
-    b.appendChild(b1); b.appendChild(b2);
-    var c = document.createElement('span');
-    c.className = 'chip'; c.textContent = chip;
-    row.appendChild(a); row.appendChild(b); row.appendChild(c);
-    return row;
+    var li = document.createElement('li');
+    li.className = 'law-row';
+    li.setAttribute('data-state', state);
+    var t = document.createElement('span'); t.className = 'b-title'; t.textContent = '[' + law + '] ' + ref;
+    var m = document.createElement('span'); m.className = 'b-meta'; m.textContent = lux + (kind ? ' · ' + kind : '');
+    var c = document.createElement('span'); c.className = 'chip'; c.textContent = chip;
+    li.appendChild(t); li.appendChild(m); li.appendChild(c);
+    return li;
   }
 
   function currentLamp() { return LAMPS[$('lampSel').value] || LAMPS[DATA.defaultLamp]; }
@@ -1050,6 +1049,7 @@ button, input { font: inherit; color: inherit; }
     for (var i = 1; i < crit.length; i++) { if (crit[i].lux > gov.lux) gov = crit[i]; }
 
     function passes(lux) { return valid && E >= lux - 1e-9; }
+    text('govText', '판정기준 ' + fmt(gov.lux) + ' lx · ' + gov.name);
     var needRaw = valid ? gov.lux * area / (F * U * M) : NaN;
     need = valid ? Math.ceil(needRaw - 1e-9) : null;
     var allPass = valid && passes(gov.lux);
@@ -1311,6 +1311,10 @@ button, input { font: inherit; color: inherit; }
   if (window.ResizeObserver) new ResizeObserver(syncDockSpace).observe($('dock'));
   window.addEventListener('resize', syncDockSpace);
 
+  (function () {
+    var t = new Date();
+    text('today', t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'));
+  })();
   RANGE_IDS.forEach(buildRangeSelect);
   buildLampSelect();
   buildCuTable();
