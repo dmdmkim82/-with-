@@ -317,6 +317,33 @@ button, input { font: inherit; color: inherit; }
   .inp input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 }
 
+.inp select {
+  flex: 1 1 auto; min-width: 0; width: 100%;
+  border: 0; background: transparent; outline: 0; color: inherit;
+  padding: 8px 4px 8px 12px;
+  font: inherit; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.inp select option, .inp select optgroup { color: var(--fg); background: var(--surface); }
+
+/* 조명율표 */
+.cu-wrap { overflow: auto; max-height: 460px; border: 1px solid var(--line); border-radius: 8px; }
+.cu-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 760px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.cu-table th, .cu-table td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.cu-table th { position: sticky; top: 0; z-index: 1; background: var(--surface-2); font-weight: 700; color: var(--muted); }
+.cu-table th:nth-child(-n+3), .cu-table td:nth-child(-n+3) { text-align: left; }
+.cu-table th.col-on { color: var(--accent); }
+.cu-table td.col-on { background: var(--surface-2); }
+.cu-table tr.on td { background: var(--accent-soft); font-weight: 700; }
+.cu-table tr.on td.col-on { background: var(--accent); color: var(--accent-fg); }
+.cu-pick {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-weight: 800; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.cu-table tr.on td.col-on .cu-pick { color: var(--accent-fg); }
+.cu-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
 /* 실시간 판정: 오른쪽 하단 고정 */
 .dock {
   position: fixed; z-index: 30;
@@ -405,19 +432,19 @@ button, input { font: inherit; color: inherit; }
         <div class="fields">
           <div class="field wide">
             <label for="zoneName">구역명 (장소)</label>
-            <div class="inp"><input id="zoneName" type="text" value="FAB 2층 가설 작업구역" autocomplete="off"></div>
+            <div class="inp"><input id="zoneName" type="text" value="CUB 가설 구역" autocomplete="off"></div>
           </div>
           <div class="field">
             <label for="roomX">가로</label>
-            <div class="inp"><input id="roomX" type="number" inputmode="decimal" min="0" step="0.1" value="20"><span class="unit">m</span></div>
+            <div class="inp"><select id="roomX"></select><span class="unit">m</span></div>
           </div>
           <div class="field">
             <label for="roomY">세로</label>
-            <div class="inp"><input id="roomY" type="number" inputmode="decimal" min="0" step="0.1" value="30"><span class="unit">m</span></div>
+            <div class="inp"><select id="roomY"></select><span class="unit">m</span></div>
           </div>
           <div class="field">
             <label for="roomH">높이 (광원~작업면)</label>
-            <div class="inp"><input id="roomH" type="number" inputmode="decimal" min="0" step="0.1" value="4"><span class="unit">m</span></div>
+            <div class="inp"><select id="roomH"></select><span class="unit">m</span></div>
           </div>
         </div>
       </div>
@@ -427,9 +454,9 @@ button, input { font: inherit; color: inherit; }
         <fieldset class="seg-wrap">
           <legend class="seg-legend">산업안전보건법 · 작업 구분</legend>
           <div class="seg c5" data-group="osh">
-            <label><input type="radio" name="osh" id="osh-path" value="path">통로<small>75 lx</small></label>
+            <label><input type="radio" name="osh" id="osh-path" value="path" checked>통로<small>75 lx</small></label>
             <label><input type="radio" name="osh" id="osh-etc" value="etc">그 밖의 작업<small>75 lx</small></label>
-            <label><input type="radio" name="osh" id="osh-normal" value="normal" checked>보통작업<small>150 lx</small></label>
+            <label><input type="radio" name="osh" id="osh-normal" value="normal">보통작업<small>150 lx</small></label>
             <label><input type="radio" name="osh" id="osh-fine" value="fine">정밀작업<small>300 lx</small></label>
             <label><input type="radio" name="osh" id="osh-ultra" value="ultra">초정밀작업<small>750 lx</small></label>
           </div>
@@ -458,57 +485,52 @@ button, input { font: inherit; color: inherit; }
       </div>
 
       <div class="group">
-        <div class="group-title">가설 조명기구</div>
+        <div class="group-title">조명기구</div>
         <fieldset class="seg-wrap">
-          <legend class="seg-legend">종류</legend>
-          <div class="seg" data-group="lamp">
-            <label><input type="radio" name="lamp" id="lamp-flood" value="flood" checked>LED 투광등</label>
-            <label><input type="radio" name="lamp" id="lamp-work" value="work">LED 작업등</label>
-            <label><input type="radio" name="lamp" id="lamp-string" value="string">LED 줄조명</label>
-            <label><input type="radio" name="lamp" id="lamp-tube" value="tube">LED 직관등</label>
-            <label><input type="radio" name="lamp" id="lamp-balloon" value="balloon">LED 벌룬등</label>
-            <label><input type="radio" name="lamp" id="lamp-custom" value="custom">직접 입력</label>
+          <legend class="seg-legend">입력 방식</legend>
+          <div class="seg c2" data-group="mode">
+            <label><input type="radio" name="mode" id="mode-table" value="table" checked>조명율표에서 선택<small>등 타입 · 광속 · 조명률 자동</small></label>
+            <label><input type="radio" name="mode" id="mode-manual" value="manual">수동 입력<small>소비전력 · 광속 · 조명률 직접</small></label>
           </div>
         </fieldset>
-        <div class="fields">
-          <div class="field">
-            <label for="lampW">정격 소비전력</label>
-            <div class="inp"><input id="lampW" type="number" inputmode="decimal" min="0" step="1" value="100"><span class="unit">W</span></div>
-          </div>
-          <div class="field">
-            <label for="lampN">설치개수</label>
-            <div class="inp"><input id="lampN" type="number" inputmode="numeric" min="0" step="1" value="18"><span class="unit">개</span></div>
-          </div>
-          <div class="field">
-            <label for="lampF">광속 <span class="state" id="fluxState">(자동)</span></label>
-            <div class="inp"><input id="lampF" type="number" inputmode="decimal" min="0" step="10" value="11000"><span class="unit">lm</span></div>
-          </div>
+        <div class="fields" id="tableFields">
           <div class="field wide">
-            <span class="hint" id="fluxHint"></span>
+            <label for="lampSel">등 타입</label>
+            <div class="inp"><select id="lampSel"></select></div>
+            <span class="hint" id="lampInfo"></span>
           </div>
         </div>
-        <fieldset class="seg-wrap">
-          <legend class="seg-legend">배광 형태 <span id="distState">(종류에 따라 자동, 변경 가능)</span></legend>
-          <div class="seg" data-group="dist">
-            <label><input type="radio" name="dist" id="dist-direct" value="direct" checked>하향 직접<small>투광등 하향·반사갓형</small></label>
-            <label><input type="radio" name="dist" id="dist-semi" value="semi">반직접<small>노출 직관등·측방 조사</small></label>
-            <label><input type="radio" name="dist" id="dist-diffuse" value="diffuse">전반확산<small>전구형·벌룬</small></label>
+        <div class="fields" id="manualFields" hidden>
+          <div class="field wide">
+            <label for="manName">등 명칭</label>
+            <div class="inp"><input id="manName" type="text" value="" placeholder="예: LED 투광등 100W" autocomplete="off"></div>
           </div>
-        </fieldset>
+          <div class="field">
+            <label for="manW">1등 소비전력</label>
+            <div class="inp"><input id="manW" type="number" inputmode="decimal" min="0" step="1" value="100"><span class="unit">W</span></div>
+          </div>
+          <div class="field">
+            <label for="manF">1등 광속</label>
+            <div class="inp"><input id="manF" type="number" inputmode="decimal" min="0" step="10" value="11000"><span class="unit">lm</span></div>
+          </div>
+          <div class="field">
+            <label for="manCu">조명률</label>
+            <div class="inp"><input id="manCu" type="number" inputmode="decimal" min="0" max="1.5" step="0.01" value="0.70"></div>
+          </div>
+          <div class="field wide"><span class="hint" id="manHint"></span></div>
+        </div>
+        <div class="fields two">
+          <div class="field">
+            <label for="lampN">설치개수</label>
+            <div class="inp"><select id="lampN"></select><span class="unit">개</span></div>
+          </div>
+        </div>
       </div>
 
       <div class="group">
-        <div class="group-title">현장 환경 <small>— 반사율·보수율·조명률 자동 적용, 변경 가능</small></div>
+        <div class="group-title">보수율 <small>— 오염 정도에 따라 자동 적용, 변경 가능</small></div>
         <fieldset class="seg-wrap">
-          <legend class="seg-legend">마감 상태 (반사율 천장/벽/바닥)</legend>
-          <div class="seg" data-group="refl">
-            <label><input type="radio" name="refl" id="refl-bare" value="bare" checked>미마감<small>0.3 / 0.3 / 0.1</small></label>
-            <label><input type="radio" name="refl" id="refl-fin" value="fin">마감 완료<small>0.7 / 0.5 / 0.1</small></label>
-            <label><input type="radio" name="refl" id="refl-dark" value="dark">개방·암색<small>0.1 / 0.1 / 0.1</small></label>
-          </div>
-        </fieldset>
-        <fieldset class="seg-wrap">
-          <legend class="seg-legend">오염 정도 (보수율)</legend>
+          <legend class="seg-legend">오염 정도</legend>
           <div class="seg" data-group="dirt">
             <label><input type="radio" name="dirt" id="dirt-clean" value="clean">청정<small>CR·마감 구역 0.80</small></label>
             <label><input type="radio" name="dirt" id="dirt-normal" value="normal" checked>일반<small>실내 공사 0.70</small></label>
@@ -520,11 +542,6 @@ button, input { font: inherit; color: inherit; }
             <label for="mf">보수율 <span class="state" id="mfState">(자동)</span></label>
             <div class="inp"><input id="mf" type="number" inputmode="decimal" min="0" max="1" step="0.05" value="0.70"></div>
             <button type="button" class="linkbtn" id="mfReset" hidden>자동값으로 되돌리기</button>
-          </div>
-          <div class="field">
-            <label for="cu">조명률 <span class="state" id="cuState">(자동)</span></label>
-            <div class="inp"><input id="cu" type="number" inputmode="decimal" min="0" max="1" step="0.01" value="0.67"></div>
-            <button type="button" class="linkbtn" id="cuReset" hidden>자동값으로 되돌리기</button>
           </div>
         </div>
       </div>
@@ -587,6 +604,16 @@ button, input { font: inherit; color: inherit; }
       </dl>
     </section>
   </div>
+
+  <!-- ================= 조명율표 ================= -->
+  <section class="panel" aria-labelledby="t-cu">
+    <div class="block">
+      <h2 class="panel-title" id="t-cu">조명율표</h2>
+      <p class="hint">반사율 천장 70% · 벽 50% · 바닥 20% 기준. 열은 실지수(기호)입니다. 기호를 누르면 그 등 타입으로 계산하고, 선택한 등의 행과 지금 적용 중인 실지수 열을 강조합니다.</p>
+    </div>
+    <div class="cu-wrap"><table class="cu-table" id="cuTable"></table></div>
+    <p class="hint">원본 엑셀 「조명율표」 시트의 값을 옮겼습니다. 원본에 값이 비어 있는 F4·F6은 제외했습니다.</p>
+  </section>
 
   <!-- ================= 기준 원문 ================= -->
   <section class="panel" aria-labelledby="t-basis">
@@ -651,15 +678,15 @@ button, input { font: inherit; color: inherit; }
       <div class="sub-title">계산 방법</div>
       <ul class="notes">
         <li><b>계산조도</b> = 설치개수 × 광속 × 조명률 × 보수율 ÷ 넓이. 법정 기준은 작업 중 항상 유지해야 하는 최소값이므로, 초기조도가 아니라 보수율을 반영한 유지조도로 판정합니다.</li>
-        <li><b>광속(lm)</b>이 조도를 결정합니다. 명판 광속을 넣는 것이 가장 정확하고, 비워 두면 정격 W × 종류별 발광효율로 추정합니다.</li>
-        <li><b>정격 W</b>는 조도 계산식에 들어가지 않습니다. 광속 추정과 가설 분전반 부하(소비전력·전류·분기회로 수) 산정에만 씁니다.</li>
+        <li><b>조명률</b>은 조명율표(천장 70%·벽 50%·바닥 20%)에서 선택한 등 타입의 행과 실지수 기호의 열을 찾아 씁니다. 기호별 열: A 5 · B 4 · C 3 · D 2.5 · E 2 · F 1.5 · G 1.25 · H 1 · I 0.75. 실지수 0.7 미만(J)은 표에 열이 없어 0.75 열 값을 쓰므로 조도가 실제보다 높게 계산될 수 있습니다.</li>
+        <li><b>광속(lm)</b>은 조명율표의 1등 광속값을 씁니다. 표에 없는 등은 수동 입력으로 명판 광속과 조명률을 넣으세요.</li>
+        <li><b>소비전력(W)</b>은 조도 계산에 들어가지 않고 가설 분전반 부하(소비전력·전류·분기회로 수) 산정에만 씁니다. 등타입 표기를 1등 기준으로 환산합니다(예: LED 13W*8 → 104 W).</li>
         <li><b>보수율</b>은 가설 현장의 분진·오염·파손을 고려해 상설 조명(0.8~0.9)보다 낮은 0.6~0.8을 기본으로 둡니다.</li>
-        <li><b>조명률</b>은 배광 형태·반사율·실지수별 개략 대표값입니다. 제조사 배광자료나 사내 기준표가 있으면 그 값을 직접 입력하세요.</li>
       </ul>
     </div>
   </section>
 
-  <p class="foot">조명률·발광효율·보수율 기준표는 스크립트의 DATA 객체만 수정하면 됩니다. 계산값은 광속법에 의한 평균조도이므로, 설치 후에는 조도계로 작업면의 가장 어두운 지점을 실측해 기준 이상인지 확인하세요.</p>
+  <p class="foot">조명율표·보수율 기준표는 스크립트의 DATA 객체만 수정하면 됩니다. 계산값은 광속법에 의한 평균조도이므로, 설치 후에는 조도계로 작업면의 가장 어두운 지점을 실측해 기준 이상인지 확인하세요.</p>
 </main>
 
 <aside class="dock" id="dock" data-state="na" aria-label="실시간 판정">
@@ -696,25 +723,77 @@ button, input { font: inherit; color: inherit; }
       storeA: { label: '보관시설(급성·사고대비)', lux: 75, ref: '보관시설 고시 제6조제2호 · 별표 1 2)-1' },
       storeB: { label: '보관시설(만성·생태)', lux: null, ref: '보관시설 고시 제14조·제22조제2호 · 별표 2·3 2)-1' }
     },
-    // 가설 등기구: w 기본 정격(W), eff 발광효율(lm/W, 보수적 대표값), dist 기본 배광
-    lamps: {
-      flood:   { label: 'LED 투광등', w: 100, eff: 110, dist: 'direct',  note: '' },
-      work:    { label: 'LED 작업등', w: 50,  eff: 100, dist: 'semi',    note: '' },
-      string:  { label: 'LED 줄조명', w: 15,  eff: 90,  dist: 'diffuse', note: ' 줄조명은 전구 1개 기준으로 입력하고, 설치개수에 전구 수를 넣으세요.' },
-      tube:    { label: 'LED 직관등', w: 20,  eff: 110, dist: 'semi',    note: '' },
-      balloon: { label: 'LED 벌룬등', w: 300, eff: 100, dist: 'diffuse', note: '' },
-      custom:  { label: '직접 입력',  w: null, eff: 100, dist: null,     note: '' }
-    },
-    dist: {
-      direct:  { label: '하향 직접' },
-      semi:    { label: '반직접' },
-      diffuse: { label: '전반확산' }
-    },
-    refl: {
-      bare: { label: '미마감 (콘크리트 노출)', c: 0.3, w: 0.3, f: 0.1 },
-      fin:  { label: '마감 완료 (밝은 마감)',  c: 0.7, w: 0.5, f: 0.1 },
-      dark: { label: '개방·암색 (철골 노출)',  c: 0.1, w: 0.1, f: 0.1 }
-    },
+    // 조명율표 (천장 70% · 벽 50% · 바닥 20%). 열 순서 = 실지수 0.75 / 1 / 1.25 / 1.5 / 2 / 2.5 / 3 / 4 / 5
+    reflectance: { c: 0.7, w: 0.5, f: 0.2 },
+    cuCols: [
+      { k: 0.75, sym: 'I' }, { k: 1, sym: 'H' }, { k: 1.25, sym: 'G' }, { k: 1.5, sym: 'F' }, { k: 2, sym: 'E' },
+      { k: 2.5, sym: 'D' }, { k: 3, sym: 'C' }, { k: 4, sym: 'B' }, { k: 5, sym: 'A' }
+    ],
+    // [기호, 등타입, 1등 광속(lm), 실지수별 조명률 9개]
+    table: [
+      ['A1W8', 'LED 13W*8',  9577, [0.69, 0.81, 0.9, 0.97, 1.06, 1.12, 1.16, 1.22, 1.25]],
+      ['A1Y8', 'LED 13W*8', 10627, [0.47, 0.55, 0.61, 0.65, 0.71, 0.74, 0.77, 0.81, 0.83]],
+      ['A1W6', 'LED 13W*6',  7181, [0.69, 0.82, 0.91, 0.97, 1.07, 1.13, 1.17, 1.23, 1.26]],
+      ['A1Y6', 'LED 13W*6',  7970, [0.47, 0.55, 0.61, 0.65, 0.7, 0.74, 0.77, 0.81, 0.83]],
+      ['A1-1', 'LED 13W*4',  5372, [0.61, 0.72, 0.8, 0.86, 0.94, 0.99, 1.03, 1.08, 1.11]],
+      ['A2',   'LED 13W*2',  2840, [0.56, 0.67, 0.74, 0.79, 0.87, 0.92, 0.95, 1, 1.03]],
+      ['A3 W', 'LED 13W*8', 12300, [0.57, 0.68, 0.75, 0.8, 0.88, 0.93, 0.96, 1.01, 1.04]],
+      ['A3 Y', 'LED 13W*8', 10200, [0.57, 0.68, 0.75, 0.8, 0.88, 0.93, 0.96, 1.01, 1.04]],
+      ['A4 W', 'LED 43W',    5200, [0.57, 0.68, 0.75, 0.8, 0.88, 0.93, 0.96, 1.01, 1.04]],
+      ['A4 Y', 'LED 43W',    4400, [0.57, 0.68, 0.75, 0.8, 0.88, 0.93, 0.96, 1.01, 1.04]],
+      ['B1',   'LED 17W*2',  4140, [0.64, 0.73, 0.81, 0.86, 0.94, 0.99, 1.03, 1.08, 1.11]],
+      ['B2',   'LED 17W*2',  4140, [0.6, 0.68, 0.75, 0.8, 0.87, 0.92, 0.96, 1, 1.03]],
+      ['B3',   'LED 17W*1',  2070, [0.55, 0.63, 0.71, 0.76, 0.84, 0.89, 0.93, 0.98, 1.01]],
+      ['B4',   'LED 13W*3',  3360, [0.56, 0.67, 0.74, 0.79, 0.87, 0.92, 0.95, 1, 1.03]],
+      ['B5',   'LED 40W',    5000, [0.6, 0.68, 0.76, 0.81, 0.88, 0.93, 0.96, 1.01, 1.04]],
+      ['B6',   'LED 40W',    5000, [0.54, 0.64, 0.71, 0.76, 0.83, 0.88, 0.92, 0.96, 0.99]],
+      ['C1',   'LED 17W*2',  4140, [0.56, 0.64, 0.71, 0.77, 0.84, 0.89, 0.93, 0.98, 1.01]],
+      ['C2',   'LED 17W',    2070, [0.54, 0.621, 0.7, 0.75, 0.82, 0.87, 0.91, 0.96, 0.99]],
+      ['C3',   'LED 17W*2',  3380, [0.55, 0.62, 0.7, 0.75, 0.82, 0.86, 0.9, 0.95, 0.98]],
+      ['C4',   'LED 17W*2',  4140, [0.5, 0.58, 0.65, 0.7, 0.77, 0.82, 0.86, 0.91, 0.94]],
+      ['C5',   'LED 17W',    2070, [0.51, 0.59, 0.66, 0.71, 0.78, 0.83, 0.87, 0.92, 0.95]],
+      ['C6',   'LED 17W',    2070, [0.52, 0.6, 0.67, 0.72, 0.79, 0.84, 0.87, 0.92, 0.95]],
+      ['C7',   'LED 17W*2',  4080, [0.53, 0.61, 0.69, 0.74, 0.81, 0.86, 0.9, 0.95, 0.98]],
+      ['C8',   'LED 14W',    1290, [0.51, 0.59, 0.66, 0.71, 0.78, 0.83, 0.86, 0.91, 0.95]],
+      ['D1',   'LED 17W*2',  4140, [0.56, 0.64, 0.71, 0.77, 0.84, 0.89, 0.93, 0.98, 1.01]],
+      ['D2',   'LED 17W',    2070, [0.54, 0.62, 0.7, 0.75, 0.82, 0.87, 0.91, 0.96, 0.99]],
+      ['D1-1', 'LED 17W*2',  4140, [0.56, 0.64, 0.71, 0.77, 0.84, 0.89, 0.93, 0.98, 1.01]],
+      ['D3',   'LED 17W*2',  3380, [0.55, 0.62, 0.7, 0.75, 0.82, 0.86, 0.9, 0.95, 0.98]],
+      ['D4',   'LED 17W',    1690, [0.55, 0.62, 0.7, 0.75, 0.82, 0.86, 0.9, 0.95, 0.98]],
+      ['D5',   'LED 35W',    4130, [0.59, 0.69, 0.76, 0.81, 0.89, 0.93, 0.97, 1.01, 1.04]],
+      ['D5-1', 'LED 35W',    4230, [0.55, 0.63, 0.7, 0.75, 0.82, 0.87, 0.91, 0.95, 0.99]],
+      ['DS1',  'LED 40W',    4778, [0.54, 0.62, 0.69, 0.74, 0.82, 0.86, 0.9, 0.95, 0.98]],
+      ['E1',   'LED 17W*2',  3070, [0.53, 0.61, 0.68, 0.73, 0.8, 0.85, 0.88, 0.93, 0.96]],
+      ['E2',   'LED 17W*1',  2070, [0.46, 0.55, 0.62, 0.68, 0.75, 0.8, 0.84, 0.89, 0.93]],
+      ['E3',   'LED 40W',    4200, [0.6, 0.72, 0.8, 0.85, 0.94, 0.99, 1.03, 1.09, 1.12]],
+      ['E4',   'LED 17W*2',  4140, [0.48, 0.57, 0.63, 0.68, 0.75, 0.8, 0.84, 0.89, 0.92]],
+      ['F2',   'LED 15.8W',  1800, [0.63, 0.73, 0.8, 0.85, 0.92, 0.96, 0.99, 1.03, 1.06]],
+      ['F3',   'LED 10W',    1315, [0.62, 0.72, 0.79, 0.84, 0.91, 0.95, 0.98, 1.03, 1.05]],
+      ['G2',   'LED 11W',     452, [0.52, 0.6, 0.68, 0.73, 0.81, 0.86, 0.9, 0.95, 0.99]],
+      ['G3',   'LED 15W',     910, [0.56, 0.67, 0.74, 0.79, 0.87, 0.92, 0.95, 1, 1.03]],
+      ['G4',   'LED 19W',     910, [0.56, 0.67, 0.74, 0.79, 0.87, 0.92, 0.95, 1, 1.03]],
+      ['H1',   'LED 11W',     452, [0.52, 0.6, 0.68, 0.73, 0.81, 0.86, 0.9, 0.95, 0.99]],
+      ['H2',   'LED 11W',     465, [0.44, 0.52, 0.59, 0.64, 0.72, 0.77, 0.81, 0.87, 0.9]],
+      ['J1',   'LED 100W',  14200, [0.61, 0.7, 0.78, 0.83, 0.9, 0.95, 0.98, 1.02, 1.05]],
+      ['J2',   'LED 100W',  14200, [0.61, 0.7, 0.78, 0.83, 0.9, 0.95, 0.98, 1.02, 1.05]],
+      ['J3',   'LED 100W',  14200, [0.61, 0.7, 0.78, 0.83, 0.9, 0.95, 0.98, 1.02, 1.05]],
+      ['J4',   'LED 100W',  14000, [0.63, 0.71, 0.79, 0.85, 0.92, 0.97, 1, 1.04, 1.07]],
+      ['J5',   'LED 100W',  15000, [0.61, 0.7, 0.78, 0.83, 0.9, 0.95, 0.98, 1.02, 1.05]],
+      ['J6',   'LED 150W',  21000, [0.61, 0.7, 0.78, 0.83, 0.9, 0.95, 0.98, 1.02, 1.05]],
+      ['J8',   'LED 150W',  21000, [0.61, 0.7, 0.78, 0.83, 0.9, 0.95, 0.98, 1.02, 1.05]],
+      ['K3',   'LED 17W*2',  3800, [0.6, 0.69, 0.78, 0.83, 0.92, 0.97, 1.01, 1.07, 1.1]],
+      ['K4',   'LED 17W*2',  3800, [0.493, 0.5874, 0.6424, 0.7098, 0.782, 0.8281, 0.8742, 0.9405, 0.9702]],
+      ['K6',   'LED 100W',  14939, [0.62, 0.7, 0.78, 0.83, 0.9, 0.95, 0.98, 1.02, 1.05]],
+      ['K7',   'LED 150W',  14935, [0.54, 0.64, 0.71, 0.77, 0.84, 0.89, 0.93, 0.97, 1.01]],
+      ['M1',   'LED 38W',    5600, [0.63, 0.71, 0.79, 0.84, 0.91, 0.96, 0.99, 1.03, 1.06]],
+      ['M2',   'LED 48W',    6950, [0.63, 0.71, 0.79, 0.84, 0.91, 0.96, 0.99, 1.03, 1.06]],
+      ['M3',   'LED 60W',    8330, [0.63, 0.71, 0.79, 0.84, 0.91, 0.96, 0.99, 1.03, 1.06]],
+      ['M5',   'LED 50W',    6950, [0.62, 0.71, 0.79, 0.84, 0.91, 0.96, 0.99, 1.03, 1.06]],
+      ['O1',   'LED 100W',  12000, [0.51, 0.64, 0.72, 0.79, 0.87, 0.92, 0.96, 1.01, 1.04]]
+    ],
+    defaultLamp: 'B5',
+    defaults: { roomX: 20, roomY: 30, roomH: 4, lampN: 18 },
+    rangeMax: 100,
     mf: {
       clean:  { label: '청정', v: 0.80 },
       normal: { label: '일반', v: 0.70 },
@@ -733,33 +812,18 @@ button, input { font: inherit; color: inherit; }
       { sym: 'I', min: 0.7,  range: '0.7 ~ 0.9 미만' },
       { sym: 'J', min: 0,    range: '0.7 미만' }
     ],
-    // 조명률표 (개략 대표값). 배광 → 반사율 → 실지수 A~J 순
-    cu: {
-      direct: {
-        fin:  [0.77, 0.75, 0.71, 0.68, 0.64, 0.58, 0.54, 0.48, 0.42, 0.34],
-        bare: [0.74, 0.71, 0.67, 0.63, 0.59, 0.53, 0.49, 0.43, 0.37, 0.29],
-        dark: [0.72, 0.69, 0.64, 0.61, 0.57, 0.50, 0.46, 0.40, 0.34, 0.26]
-      },
-      semi: {
-        fin:  [0.71, 0.68, 0.63, 0.60, 0.55, 0.49, 0.45, 0.40, 0.34, 0.27],
-        bare: [0.62, 0.59, 0.54, 0.50, 0.46, 0.40, 0.36, 0.31, 0.26, 0.20],
-        dark: [0.56, 0.53, 0.48, 0.45, 0.41, 0.35, 0.31, 0.26, 0.22, 0.16]
-      },
-      diffuse: {
-        fin:  [0.64, 0.61, 0.56, 0.52, 0.48, 0.42, 0.38, 0.33, 0.28, 0.22],
-        bare: [0.50, 0.47, 0.43, 0.40, 0.36, 0.31, 0.28, 0.24, 0.20, 0.15],
-        dark: [0.40, 0.38, 0.34, 0.32, 0.29, 0.24, 0.22, 0.18, 0.15, 0.11]
-      }
-    },
     // 가설 전원 가정: 단상 220 V, 역률 0.9, 20 A 분기에 연속부하 80 %
     power: { volt: 220, pf: 0.9, breaker: 20, load: 0.8 },
     spacingRatio: 1.5 // 등 간격 권장 한도 = 1.5 × 높이
   };
 
-  var STORE_KEY = 'tempLightingCalc.v1';
-  var auto = { flux: true, cu: true, mf: true };
+  var STORE_KEY = 'tempLightingCalc.v2';
+  var LAMPS = {};
+  var auto = { mf: true };
+  var manualTouched = false;
   var need = null;
   var dockReady = false;
+  var shownLamp = null;
 
   function $(id) { return document.getElementById(id); }
   function num(id) { var v = parseFloat($(id).value); return isFinite(v) ? v : NaN; }
@@ -767,18 +831,92 @@ button, input { font: inherit; color: inherit; }
   function setRadio(name, value) { var el = $(name + '-' + value); if (el) el.checked = true; }
   function fmt(n, d) { return Number(n).toLocaleString('ko-KR', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
   function plain(n) { return String(+Number(n).toFixed(2)); }
+  function cuStr(n) { return String(+Number(n).toFixed(4)); }
   function text(id, s) { $(id).textContent = s; }
 
+  // "LED 13W*8" → 1등 104 W
+  function lampWatts(type) {
+    var m = String(type).match(/(\d+(?:\.\d+)?)\s*W(?:\s*[*×xX]\s*(\d+))?/);
+    return m ? parseFloat(m[1]) * (m[2] ? parseInt(m[2], 10) : 1) : NaN;
+  }
   function gradeOf(k) {
     for (var i = 0; i < DATA.grades.length; i++) { if (k >= DATA.grades[i].min) return i; }
     return DATA.grades.length - 1;
+  }
+  // 실지수 기호 → 조명율표 열. J(0.7 미만)는 표에 열이 없어 0.75 열을 쓴다.
+  function colOf(sym) {
+    for (var i = 0; i < DATA.cuCols.length; i++) { if (DATA.cuCols[i].sym === sym) return i; }
+    return 0;
+  }
+  function setRangeValue(sel, v) {
+    var n = Math.round(parseFloat(v));
+    if (!(n > 0)) return;
+    var s = String(n);
+    for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === s) { sel.value = s; return; } }
+    var o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    sel.appendChild(o);
+    sel.value = s;
+  }
+
+  function buildRangeSelect(id) {
+    var sel = $(id);
+    for (var i = 1; i <= DATA.rangeMax; i++) {
+      var o = document.createElement('option');
+      o.value = String(i); o.textContent = String(i);
+      sel.appendChild(o);
+    }
+    sel.value = String(DATA.defaults[id]);
+  }
+  function buildLampSelect() {
+    var sel = $('lampSel'), groups = {};
+    DATA.table.forEach(function (r) {
+      var lamp = { code: r[0], type: r[1], lm: r[2], cu: r[3], w: lampWatts(r[1]) };
+      LAMPS[lamp.code] = lamp;
+      var key = lamp.code.charAt(0);
+      if (!groups[key]) {
+        groups[key] = document.createElement('optgroup');
+        groups[key].label = key + ' 계열';
+        sel.appendChild(groups[key]);
+      }
+      var o = document.createElement('option');
+      o.value = lamp.code;
+      o.textContent = lamp.code + ' · ' + lamp.type + ' · ' + fmt(lamp.lm) + ' lm';
+      groups[key].appendChild(o);
+    });
+    sel.value = DATA.defaultLamp;
+  }
+  function buildCuTable() {
+    var t = $('cuTable');
+    var thead = document.createElement('thead'), hr = document.createElement('tr');
+    ['기호', '등타입', '광속(lm)'].forEach(function (h) {
+      var th = document.createElement('th'); th.scope = 'col'; th.textContent = h; hr.appendChild(th);
+    });
+    DATA.cuCols.forEach(function (c, i) {
+      var th = document.createElement('th'); th.scope = 'col'; th.setAttribute('data-col', i);
+      th.textContent = c.k + ' · ' + c.sym; hr.appendChild(th);
+    });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement('tbody');
+    DATA.table.forEach(function (r) {
+      var tr = document.createElement('tr'); tr.setAttribute('data-code', r[0]);
+      var td0 = document.createElement('td'), b = document.createElement('button');
+      b.type = 'button'; b.className = 'cu-pick'; b.setAttribute('data-code', r[0]); b.textContent = r[0];
+      td0.appendChild(b); tr.appendChild(td0);
+      var td1 = document.createElement('td'); td1.textContent = r[1]; tr.appendChild(td1);
+      var td2 = document.createElement('td'); td2.textContent = fmt(r[2]); tr.appendChild(td2);
+      r[3].forEach(function (v, i) {
+        var td = document.createElement('td'); td.setAttribute('data-col', i); td.textContent = String(v); tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
   }
 
   function syncSegments() {
     var labels = document.querySelectorAll('.seg > label');
     for (var i = 0; i < labels.length; i++) {
-      var input = labels[i].querySelector('input');
-      labels[i].classList.toggle('on', input.checked);
+      labels[i].classList.toggle('on', labels[i].querySelector('input').checked);
     }
   }
 
@@ -802,41 +940,60 @@ button, input { font: inherit; color: inherit; }
     return row;
   }
 
+  function currentLamp() { return LAMPS[$('lampSel').value] || LAMPS[DATA.defaultLamp]; }
+
+  function prefillManual() {
+    var lamp = currentLamp();
+    $('manName').value = lamp.code + ' ' + lamp.type;
+    if (isFinite(lamp.w)) $('manW').value = plain(lamp.w);
+    $('manF').value = lamp.lm;
+    var X = num('roomX'), Y = num('roomY'), H = num('roomH');
+    if (X > 0 && Y > 0 && H > 0) {
+      var K = X * Y / (H * (X + Y));
+      $('manCu').value = cuStr(lamp.cu[colOf(DATA.grades[gradeOf(K)].sym)]);
+    }
+  }
+
   function compute() {
     syncSegments();
 
-    var lampKey = radio('lamp'), lamp = DATA.lamps[lampKey];
-    var distKey = radio('dist'), reflKey = radio('refl'), dirtKey = radio('dirt');
-    var refl = DATA.refl[reflKey];
-    var X = num('roomX'), Y = num('roomY'), H = num('roomH');
-    var W = num('lampW'), N = num('lampN');
+    // ---- 조명기구 ----
+    var isTable = radio('mode') !== 'manual';
+    $('tableFields').hidden = !isTable;
+    $('manualFields').hidden = isTable;
 
-    // 광속: 자동이면 W × 발광효율
-    if (auto.flux) $('lampF').value = (W > 0) ? Math.round(W * lamp.eff) : '';
-    var F = num('lampF');
-    text('fluxState', auto.flux ? '(자동)' : '(직접 입력)');
-    var hint = auto.flux
-      ? '자동 추정: ' + (W > 0 ? plain(W) : '–') + ' W × ' + lamp.eff + ' lm/W. 명판 광속이 있으면 광속 칸에 직접 입력하세요.'
-      : '명판 광속을 직접 입력한 상태입니다. 정격 W나 종류를 바꾸면 자동 추정으로 돌아갑니다.';
-    text('fluxHint', hint + lamp.note);
-
-    // 실지수
+    var X = num('roomX'), Y = num('roomY'), H = num('roomH'), N = num('lampN');
     var area = X * Y;
-    var K = area / (H * (X + Y));
     var roomOk = X > 0 && Y > 0 && H > 0;
+    var K = roomOk ? area / (H * (X + Y)) : NaN;
     var gi = roomOk ? gradeOf(K) : null;
+    var sym = roomOk ? DATA.grades[gi].sym : null;
+    var ci = roomOk ? colOf(sym) : null;
+    var belowTable = sym === 'J';
 
-    // 조명률 · 보수율
-    var cuTable = roomOk ? DATA.cu[distKey][reflKey][gi] : NaN;
-    if (auto.cu) $('cu').value = roomOk ? cuTable.toFixed(2) : '';
+    var lamp = currentLamp();
+    var tableU = roomOk ? lamp.cu[ci] : NaN;
+    var name, W, F, U;
+    if (isTable) {
+      name = lamp.code + ' · ' + lamp.type; W = lamp.w; F = lamp.lm; U = tableU;
+    } else {
+      name = $('manName').value.trim() || '수동 입력 등'; W = num('manW'); F = num('manF'); U = num('manCu');
+    }
+
+    text('lampInfo', '1등 ' + (isFinite(lamp.w) ? plain(lamp.w) + ' W' : '– W') + ' · 광속 ' + fmt(lamp.lm) + ' lm · ' +
+      (roomOk ? '조명률 ' + cuStr(tableU) + ' (실지수 ' + K.toFixed(2) + ' → ' + sym + ', ' + DATA.cuCols[ci].k + ' 열' + (belowTable ? ', 표 범위 밖이라 0.75 열 대체' : '') + ')' : '조명률은 실 치수 선택 후 표시'));
+    text('manHint', roomOk
+      ? '조명율표 참고: ' + lamp.code + ' ' + lamp.type + '의 실지수 ' + sym + ' 열 조명률은 ' + cuStr(tableU) + '입니다.'
+      : '조명률은 제조사 배광자료나 조명율표 값을 넣으세요.');
+
+    // ---- 보수율 ----
+    var dirtKey = radio('dirt');
     if (auto.mf) $('mf').value = DATA.mf[dirtKey].v.toFixed(2);
-    var U = num('cu'), M = num('mf');
-    text('cuState', auto.cu ? '(자동)' : '(직접 입력)');
+    var M = num('mf');
     text('mfState', auto.mf ? '(자동)' : '(직접 입력)');
-    $('cuReset').hidden = auto.cu;
     $('mfReset').hidden = auto.mf;
 
-    // 기준
+    // ---- 기준 ----
     var osh = DATA.osh[radio('osh')];
     var chemKey = radio('chem'), chem = DATA.chem[chemKey];
     var qual = num('qualLux'), site = num('siteLux');
@@ -844,7 +1001,7 @@ button, input { font: inherit; color: inherit; }
     $('qualField').hidden = !chemQualitative;
     var chemLux = chemKey === 'none' ? null : (chem.lux !== null ? chem.lux : (qual > 0 ? qual : NaN));
 
-    var valid = roomOk && F > 0 && U > 0 && U <= 1 && M > 0 && M <= 1 && N >= 0 && (chemLux === null || chemLux > 0);
+    var valid = roomOk && F > 0 && U > 0 && U <= 1.5 && M > 0 && M <= 1 && N >= 0 && (chemLux === null || chemLux > 0);
     var E = valid ? N * F * U * M / area : NaN;
     var Eshow = valid ? Math.floor(E + 1e-9) : NaN;
 
@@ -855,8 +1012,7 @@ button, input { font: inherit; color: inherit; }
     for (var i = 1; i < crit.length; i++) { if (crit[i].lux > gov.lux) gov = crit[i]; }
 
     function passes(lux) { return valid && E >= lux - 1e-9; }
-    var perLamp = F * U * M;
-    var needRaw = valid ? gov.lux * area / perLamp : NaN;
+    var needRaw = valid ? gov.lux * area / (F * U * M) : NaN;
     need = valid ? Math.ceil(needRaw - 1e-9) : null;
     var allPass = valid && passes(gov.lux);
 
@@ -864,7 +1020,7 @@ button, input { font: inherit; color: inherit; }
     var hero = $('hero');
     hero.setAttribute('data-state', valid ? (allPass ? 'pass' : 'fail') : 'na');
     text('outZone', $('zoneName').value.trim() || '구역명 미입력');
-    text('outSummary', lamp.label + ' · ' + (W > 0 ? plain(W) + ' W' : '– W') + ' × ' + (N >= 0 ? fmt(N) : '–') + '개 · 판정기준 ' + fmt(gov.lux) + ' lx');
+    text('outSummary', name + ' · ' + (W > 0 ? plain(W) + ' W' : '– W') + ' × ' + (N >= 0 ? fmt(N) : '–') + '개 · 판정기준 ' + fmt(gov.lux) + ' lx');
     text('outVerdict', valid ? (allPass ? '✓ 만족' : '✕ 불만족') : '입력 확인');
     text('outLux', valid ? fmt(Eshow) : '–');
     text('outRatio', valid ? fmt(Math.floor(E / gov.lux * 100 + 1e-9)) + '%' : '–');
@@ -879,7 +1035,7 @@ button, input { font: inherit; color: inherit; }
 
     var note;
     if (!valid) {
-      note = '치수·광속·조명률·보수율·판정값에 0보다 큰 값을 입력하세요. 조명률과 보수율은 1 이하입니다.';
+      note = '광속·조명률·보수율·판정값을 확인하세요. 조명률은 0보다 크고 1.5 이하, 보수율은 0보다 크고 1 이하입니다.';
     } else if (allPass) {
       note = '유지 평균조도 ' + fmt(Eshow) + ' lx가 판정기준 ' + fmt(gov.lux) + ' lx(' + gov.name + ') 이상입니다. 여유 ' + fmt(Math.floor(E - gov.lux + 1e-9)) + ' lx.';
     } else {
@@ -947,10 +1103,11 @@ button, input { font: inherit; color: inherit; }
 
     // ---- 실 조건 ----
     text('outArea', roomOk ? fmt(area, 1) : '–');
-    text('outK', roomOk ? K.toFixed(2) + ' · ' + DATA.grades[gi].sym : '–');
-    text('outGrade', roomOk ? '기호 ' + DATA.grades[gi].sym + ' (' + DATA.grades[gi].range + ')' : 'X·Y ÷ H(X+Y)');
-    text('outRefl', refl.c + ' / ' + refl.w + ' / ' + refl.f);
-    text('outReflName', refl.label);
+    text('outK', roomOk ? K.toFixed(2) + ' · ' + sym : '–');
+    text('outGrade', roomOk ? '기호 ' + sym + ' (' + DATA.grades[gi].range + ')' : 'X·Y ÷ H(X+Y)');
+    var R = DATA.reflectance;
+    text('outRefl', isTable ? R.c + ' / ' + R.w + ' / ' + R.f : '–');
+    text('outReflName', isTable ? '조명율표 기준' : '수동 조명률 적용');
     var spaceNote = $('outSpaceNote');
     if (roomOk && N > 0) {
       var s = Math.sqrt(area / N), lim = DATA.spacingRatio * H;
@@ -965,9 +1122,13 @@ button, input { font: inherit; color: inherit; }
     }
 
     // ---- 계수 · 결과 ----
-    var cuOk = U > 0 && U <= 1, mfOk = M > 0 && M <= 1;
+    var cuOk = U > 0 && U <= 1.5, mfOk = M > 0 && M <= 1;
     text('outCu', cuOk ? fmt(U * 100) : '–');
-    text('outCuNote', auto.cu ? (roomOk ? DATA.dist[distKey].label + ' · 기호 ' + DATA.grades[gi].sym : '–') : '직접 입력값');
+    var cuNote = $('outCuNote');
+    cuNote.textContent = isTable
+      ? (roomOk ? lamp.code + ' · ' + sym + ' 열 (실지수 ' + DATA.cuCols[ci].k + ')' + (belowTable ? ' · 0.75 열 대체' : '') : '–')
+      : '수동 입력값';
+    cuNote.classList.toggle('warn', isTable && belowTable);
     text('outMf', mfOk ? fmt(M * 100) : '–');
     text('outMfNote', auto.mf ? DATA.mf[dirtKey].label + ' 환경' : '직접 입력값');
     text('outFlux', F > 0 && N >= 0 ? fmt(F * N) : '–');
@@ -981,13 +1142,13 @@ button, input { font: inherit; color: inherit; }
       var dd = $(id); dd.textContent = body;
       if (bold) { var b = document.createElement('b'); b.textContent = bold; dd.appendChild(b); }
     }
-    if (roomOk) setCalc('fK', plain(X) + ' × ' + plain(Y) + ' ÷ (' + plain(H) + ' × (' + plain(X) + ' + ' + plain(Y) + ')) = ', K.toFixed(2) + ' → ' + DATA.grades[gi].sym);
+    if (roomOk) setCalc('fK', plain(X) + ' × ' + plain(Y) + ' ÷ (' + plain(H) + ' × (' + plain(X) + ' + ' + plain(Y) + ')) = ', K.toFixed(2) + ' → ' + sym);
     else setCalc('fK', '–');
-    if (cuOk) setCalc('fCu', (auto.cu ? DATA.dist[distKey].label + ' · 반사율 ' + refl.c + '/' + refl.w + '/' + refl.f + ' · 기호 ' + DATA.grades[gi].sym : '직접 입력') + ' = ', U.toFixed(2));
+    if (cuOk) setCalc('fCu', (isTable ? '조명율표 ' + lamp.code + ' · 기호 ' + sym + ' → ' + DATA.cuCols[ci].k + ' 열' : '수동 입력') + ' = ', cuStr(U));
     else setCalc('fCu', '–');
     if (valid) {
-      setCalc('fE', fmt(N) + ' × ' + fmt(F) + ' × ' + U.toFixed(2) + ' × ' + M.toFixed(2) + ' ÷ ' + fmt(area, 1) + ' = ', fmt(Eshow) + ' lx');
-      setCalc('fN', fmt(gov.lux) + ' × ' + fmt(area, 1) + ' ÷ (' + fmt(F) + ' × ' + U.toFixed(2) + ' × ' + M.toFixed(2) + ') = ', needRaw.toFixed(1) + ' → ' + fmt(need) + '개');
+      setCalc('fE', fmt(N) + ' × ' + fmt(F) + ' × ' + cuStr(U) + ' × ' + M.toFixed(2) + ' ÷ ' + fmt(area, 1) + ' = ', fmt(Eshow) + ' lx');
+      setCalc('fN', fmt(gov.lux) + ' × ' + fmt(area, 1) + ' ÷ (' + fmt(F) + ' × ' + cuStr(U) + ' × ' + M.toFixed(2) + ') = ', needRaw.toFixed(1) + ' → ' + fmt(need) + '개');
     } else { setCalc('fE', '–'); setCalc('fN', '–'); }
     if (W > 0 && N >= 0) {
       var P = W * N, pw = DATA.power, I = P / (pw.volt * pw.pf);
@@ -1005,16 +1166,33 @@ button, input { font: inherit; color: inherit; }
       clauses[c].classList.toggle('applied', !!applied[clauses[c].getAttribute('data-clause')]);
     }
 
+    // ---- 조명율표 강조 ----
+    var trs = document.querySelectorAll('#cuTable tbody tr');
+    for (var r = 0; r < trs.length; r++) {
+      trs[r].classList.toggle('on', isTable && trs[r].getAttribute('data-code') === lamp.code);
+    }
+    var cells = document.querySelectorAll('#cuTable [data-col]');
+    for (var q = 0; q < cells.length; q++) {
+      cells[q].classList.toggle('col-on', roomOk && +cells[q].getAttribute('data-col') === ci);
+    }
+    if (isTable && lamp.code !== shownLamp) {
+      shownLamp = lamp.code;
+      var onRow = document.querySelector('#cuTable tr.on'), wrap = $('cuTable').parentNode;
+      if (onRow) wrap.scrollTop = Math.max(0, onRow.offsetTop - wrap.clientHeight / 2);
+    }
+
     save();
   }
 
   /* ----- 저장 · 복원 (이 브라우저에만 보관) ----- */
-  var FIELD_IDS = ['zoneName', 'roomX', 'roomY', 'roomH', 'qualLux', 'siteLux', 'lampW', 'lampN', 'lampF', 'mf', 'cu'];
-  var RADIO_NAMES = ['osh', 'chem', 'lamp', 'dist', 'refl', 'dirt'];
+  var FIELD_IDS = ['zoneName', 'qualLux', 'siteLux', 'manName', 'manW', 'manF', 'manCu', 'mf'];
+  var RANGE_IDS = ['roomX', 'roomY', 'roomH', 'lampN'];
+  var RADIO_NAMES = ['osh', 'chem', 'mode', 'dirt'];
   function save() {
     try {
-      var s = { f: {}, r: {}, auto: auto };
+      var s = { f: {}, n: {}, r: {}, lamp: $('lampSel').value, auto: auto, mt: manualTouched };
       FIELD_IDS.forEach(function (id) { s.f[id] = $(id).value; });
+      RANGE_IDS.forEach(function (id) { s.n[id] = $(id).value; });
       RADIO_NAMES.forEach(function (n) { s.r[n] = radio(n); });
       localStorage.setItem(STORE_KEY, JSON.stringify(s));
     } catch (e) { /* 저장 불가 환경에서는 그대로 진행 */ }
@@ -1025,34 +1203,29 @@ button, input { font: inherit; color: inherit; }
       if (!raw) return;
       var s = JSON.parse(raw);
       FIELD_IDS.forEach(function (id) { if (s.f && typeof s.f[id] === 'string') $(id).value = s.f[id]; });
+      RANGE_IDS.forEach(function (id) { if (s.n && s.n[id]) setRangeValue($(id), s.n[id]); });
+      if (s.lamp && LAMPS[s.lamp]) $('lampSel').value = s.lamp;
       RADIO_NAMES.forEach(function (n) { if (s.r && s.r[n]) setRadio(n, s.r[n]); });
-      if (s.auto) { auto.flux = s.auto.flux !== false; auto.cu = s.auto.cu !== false; auto.mf = s.auto.mf !== false; }
-    } catch (e) { /* 복원 실패 시 기본 예시값 사용 */ }
+      if (s.auto) auto.mf = s.auto.mf !== false;
+      manualTouched = !!s.mt;
+    } catch (e) { /* 복원 실패 시 기본값 사용 */ }
   }
 
   /* ----- 이벤트 ----- */
   document.addEventListener('input', function (ev) {
     var t = ev.target;
-    if (!t || !t.id) return;
-    if (t.id === 'lampF') auto.flux = false;
-    else if (t.id === 'lampW') auto.flux = true;
-    else if (t.id === 'cu') auto.cu = false;
-    else if (t.id === 'mf') auto.mf = false;
-    if (t.type !== 'radio') compute();
+    if (!t || !t.id || t.type === 'radio' || t.tagName === 'SELECT') return;
+    if (t.id === 'mf') auto.mf = false;
+    if (t.id === 'manName' || t.id === 'manW' || t.id === 'manF' || t.id === 'manCu') manualTouched = true;
+    compute();
   });
   document.addEventListener('change', function (ev) {
     var t = ev.target;
-    if (!t || t.type !== 'radio') return;
-    if (t.name === 'lamp') {
-      var lamp = DATA.lamps[t.value];
-      if (lamp.w) $('lampW').value = lamp.w;
-      if (lamp.dist) setRadio('dist', lamp.dist);
-      auto.flux = true; auto.cu = true;
-    } else if (t.name === 'dist' || t.name === 'refl') {
-      auto.cu = true;
-    } else if (t.name === 'dirt') {
-      auto.mf = true;
-    }
+    if (!t) return;
+    if (t.tagName === 'SELECT') { compute(); return; }
+    if (t.type !== 'radio') return;
+    if (t.name === 'dirt') auto.mf = true;
+    if (t.name === 'mode' && t.value === 'manual' && !manualTouched) prefillManual();
     compute();
   });
   document.addEventListener('focusin', function (ev) {
@@ -1061,18 +1234,22 @@ button, input { font: inherit; color: inherit; }
   document.addEventListener('focusout', function (ev) {
     if (ev.target && ev.target.type === 'radio') ev.target.parentNode.classList.remove('focus');
   });
-  $('cuReset').addEventListener('click', function () { auto.cu = true; compute(); });
   $('mfReset').addEventListener('click', function () { auto.mf = true; compute(); });
-  $('applyNeed').addEventListener('click', function () {
-    if (need !== null) { $('lampN').value = need; compute(); }
-  });
-
-  $('dockApply').addEventListener('click', function () {
-    if (need !== null) { $('lampN').value = need; compute(); }
-  });
+  function applyNeedCount() {
+    if (need !== null) { setRangeValue($('lampN'), need); compute(); }
+  }
+  $('applyNeed').addEventListener('click', applyNeedCount);
+  $('dockApply').addEventListener('click', applyNeedCount);
   $('dockMore').addEventListener('click', function () {
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     $('t-out').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+  $('cuTable').addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('.cu-pick') : null;
+    if (!b) return;
+    setRadio('mode', 'table');
+    $('lampSel').value = b.getAttribute('data-code');
+    compute();
   });
   function syncDockSpace() {
     document.documentElement.style.setProperty('--dock-space', $('dock').offsetHeight + 'px');
@@ -1080,6 +1257,9 @@ button, input { font: inherit; color: inherit; }
   if (window.ResizeObserver) new ResizeObserver(syncDockSpace).observe($('dock'));
   window.addEventListener('resize', syncDockSpace);
 
+  RANGE_IDS.forEach(buildRangeSelect);
+  buildLampSelect();
+  buildCuTable();
   restore();
   compute();
   syncDockSpace();
