@@ -432,19 +432,19 @@ button, input { font: inherit; color: inherit; }
         <div class="fields">
           <div class="field wide">
             <label for="zoneName">구역명 (장소)</label>
-            <div class="inp"><input id="zoneName" type="text" value="CUB 가설 구역" autocomplete="off"></div>
+            <div class="inp"><input id="zoneName" type="text" value="전력구-1" autocomplete="off"></div>
           </div>
           <div class="field">
             <label for="roomX">가로</label>
-            <div class="inp"><select id="roomX"></select><span class="unit">m</span></div>
+            <div class="inp"><select id="roomX"></select><input id="roomX-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="가로 직접 입력" hidden><span class="unit">m</span></div>
           </div>
           <div class="field">
             <label for="roomY">세로</label>
-            <div class="inp"><select id="roomY"></select><span class="unit">m</span></div>
+            <div class="inp"><select id="roomY"></select><input id="roomY-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="세로 직접 입력" hidden><span class="unit">m</span></div>
           </div>
           <div class="field">
             <label for="roomH">높이 (광원~작업면)</label>
-            <div class="inp"><select id="roomH"></select><span class="unit">m</span></div>
+            <div class="inp"><select id="roomH"></select><input id="roomH-c" class="combo-in" type="number" inputmode="decimal" min="0" step="0.1" aria-label="높이 직접 입력" hidden><span class="unit">m</span></div>
           </div>
         </div>
       </div>
@@ -522,7 +522,7 @@ button, input { font: inherit; color: inherit; }
         <div class="fields two">
           <div class="field">
             <label for="lampN">설치개수</label>
-            <div class="inp"><select id="lampN"></select><span class="unit">개</span></div>
+            <div class="inp"><select id="lampN"></select><input id="lampN-c" class="combo-in" type="number" inputmode="numeric" min="0" step="1" aria-label="설치개수 직접 입력" hidden><span class="unit">개</span></div>
           </div>
         </div>
       </div>
@@ -791,8 +791,8 @@ button, input { font: inherit; color: inherit; }
       ['M5',   'LED 50W',    6950, [0.62, 0.71, 0.79, 0.84, 0.91, 0.96, 0.99, 1.03, 1.06]],
       ['O1',   'LED 100W',  12000, [0.51, 0.64, 0.72, 0.79, 0.87, 0.92, 0.96, 1.01, 1.04]]
     ],
-    defaultLamp: 'B5',
-    defaults: { roomX: 20, roomY: 30, roomH: 4, lampN: 18 },
+    defaultLamp: 'B1',
+    defaults: { roomX: 217, roomY: 6.4, roomH: 3.1, lampN: 39 },
     rangeMax: 100,
     mf: {
       clean:  { label: '청정', v: 0.80 },
@@ -817,7 +817,7 @@ button, input { font: inherit; color: inherit; }
     spacingRatio: 1.5 // 등 간격 권장 한도 = 1.5 × 높이
   };
 
-  var STORE_KEY = 'tempLightingCalc.v2';
+  var STORE_KEY = 'tempLightingCalc.v3';
   var LAMPS = {};
   var auto = { mf: true };
   var manualTouched = false;
@@ -848,15 +848,50 @@ button, input { font: inherit; color: inherit; }
     for (var i = 0; i < DATA.cuCols.length; i++) { if (DATA.cuCols[i].sym === sym) return i; }
     return 0;
   }
+  // 드롭다운 값 설정. 목록에 없는 값(예: 217, 6.4)은 크기 순서 자리에 항목으로 추가한다.
   function setRangeValue(sel, v) {
-    var n = Math.round(parseFloat(v));
-    if (!(n > 0)) return;
-    var s = String(n);
-    for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === s) { sel.value = s; return; } }
-    var o = document.createElement('option');
-    o.value = s; o.textContent = s;
-    sel.appendChild(o);
-    sel.value = s;
+    var x = parseFloat(v);
+    var n = sel.id === 'lampN' ? Math.round(x) : Math.round(x * 100) / 100;
+    if (n > 0) {
+      var s = String(n), found = false;
+      for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === s) { found = true; break; } }
+      if (!found) {
+        var o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        var before = null;
+        for (var j = 0; j < sel.options.length; j++) {
+          var ov = sel.options[j].value;
+          if (ov === 'custom' || parseFloat(ov) > n) { before = sel.options[j]; break; }
+        }
+        sel.insertBefore(o, before);
+      }
+      sel.value = s;
+      sel.setAttribute('data-last', s);
+    } else if (sel.getAttribute('data-last')) {
+      sel.value = sel.getAttribute('data-last');
+    }
+    var c = $(sel.id + '-c');
+    if (c) c.hidden = true;
+    sel.hidden = false;
+  }
+  // 드롭다운 값. '직접 입력' 중이면 입력 칸의 값을 쓴다.
+  function rnum(id) {
+    var sel = $(id);
+    var v = parseFloat(sel.value === 'custom' ? $(id + '-c').value : sel.value);
+    return isFinite(v) ? v : NaN;
+  }
+  function openCustom(sel) {
+    var c = $(sel.id + '-c');
+    c.value = sel.getAttribute('data-last') || '';
+    sel.hidden = true;
+    c.hidden = false;
+    c.focus();
+    try { c.select(); } catch (e) { /* 일부 브라우저는 number 칸 선택 미지원 */ }
+  }
+  function commitCustom(c) {
+    if (c.hidden) return;
+    setRangeValue($(c.id.slice(0, -2)), c.value);
+    compute();
   }
 
   function buildRangeSelect(id) {
@@ -866,7 +901,10 @@ button, input { font: inherit; color: inherit; }
       o.value = String(i); o.textContent = String(i);
       sel.appendChild(o);
     }
-    sel.value = String(DATA.defaults[id]);
+    var cu = document.createElement('option');
+    cu.value = 'custom'; cu.textContent = '직접 입력…';
+    sel.appendChild(cu);
+    setRangeValue(sel, DATA.defaults[id]);
   }
   function buildLampSelect() {
     var sel = $('lampSel'), groups = {};
@@ -947,7 +985,7 @@ button, input { font: inherit; color: inherit; }
     $('manName').value = lamp.code + ' ' + lamp.type;
     if (isFinite(lamp.w)) $('manW').value = plain(lamp.w);
     $('manF').value = lamp.lm;
-    var X = num('roomX'), Y = num('roomY'), H = num('roomH');
+    var X = rnum('roomX'), Y = rnum('roomY'), H = rnum('roomH');
     if (X > 0 && Y > 0 && H > 0) {
       var K = X * Y / (H * (X + Y));
       $('manCu').value = cuStr(lamp.cu[colOf(DATA.grades[gradeOf(K)].sym)]);
@@ -962,7 +1000,7 @@ button, input { font: inherit; color: inherit; }
     $('tableFields').hidden = !isTable;
     $('manualFields').hidden = isTable;
 
-    var X = num('roomX'), Y = num('roomY'), H = num('roomH'), N = num('lampN');
+    var X = rnum('roomX'), Y = rnum('roomY'), H = rnum('roomH'), N = rnum('lampN');
     var area = X * Y;
     var roomOk = X > 0 && Y > 0 && H > 0;
     var K = roomOk ? area / (H * (X + Y)) : NaN;
@@ -1192,7 +1230,7 @@ button, input { font: inherit; color: inherit; }
     try {
       var s = { f: {}, n: {}, r: {}, lamp: $('lampSel').value, auto: auto, mt: manualTouched };
       FIELD_IDS.forEach(function (id) { s.f[id] = $(id).value; });
-      RANGE_IDS.forEach(function (id) { s.n[id] = $(id).value; });
+      RANGE_IDS.forEach(function (id) { var v = rnum(id); if (v > 0) s.n[id] = String(v); });
       RADIO_NAMES.forEach(function (n) { s.r[n] = radio(n); });
       localStorage.setItem(STORE_KEY, JSON.stringify(s));
     } catch (e) { /* 저장 불가 환경에서는 그대로 진행 */ }
@@ -1222,11 +1260,27 @@ button, input { font: inherit; color: inherit; }
   document.addEventListener('change', function (ev) {
     var t = ev.target;
     if (!t) return;
-    if (t.tagName === 'SELECT') { compute(); return; }
+    if (t.classList && t.classList.contains('combo-in')) { commitCustom(t); return; }
+    if (t.tagName === 'SELECT') {
+      if (t.value === 'custom') { openCustom(t); compute(); return; }
+      if (RANGE_IDS.indexOf(t.id) >= 0) t.setAttribute('data-last', t.value);
+      compute();
+      return;
+    }
     if (t.type !== 'radio') return;
     if (t.name === 'dirt') auto.mf = true;
     if (t.name === 'mode' && t.value === 'manual' && !manualTouched) prefillManual();
     compute();
+  });
+  document.addEventListener('keydown', function (ev) {
+    var t = ev.target;
+    if (!t || !t.classList || !t.classList.contains('combo-in')) return;
+    if (ev.key === 'Enter') { ev.preventDefault(); commitCustom(t); }
+    else if (ev.key === 'Escape') { t.value = ''; commitCustom(t); }
+  });
+  document.addEventListener('focusout', function (ev) {
+    var t = ev.target;
+    if (t && t.classList && t.classList.contains('combo-in')) commitCustom(t);
   });
   document.addEventListener('focusin', function (ev) {
     if (ev.target && ev.target.type === 'radio' && ev.target.matches(':focus-visible')) ev.target.parentNode.classList.add('focus');
