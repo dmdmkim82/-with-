@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo skip install",
+  "buildCommand": "mkdir -p public && cp 가설조명_계산_앱.html public/index.html",
+  "outputDirectory": "public"
+}

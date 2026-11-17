@@ -37,3 +37,10 @@ python -m streamlit run app.py
 - 수동 검토: 앱에서 자재 분류, 규격, 구분을 선택하고 단가를 입력
 - Excel 업로드: `item_code` + `quoted_price` 조합을 권장
 - `item_code`가 없으면 `section_name`, `spec`, `variant`를 정확히 입력해야 매칭된다.
+
+## 부가 도구
+
+- `가설조명_계산_앱.html`: 가설 조명 조도 계산기. 브라우저에서 파일을 바로 열어 쓰는 단독 HTML이다(설치·서버 불필요).
+  - 광속법으로 유지 평균조도와 필요개수를 계산하고, 산업안전보건법(안전보건규칙 제8조·제21조)과 화학물질관리법(화학물질안전원고시) 조도 기준 만족 여부를 근거 조문과 함께 표시한다.
+  - 조명률·발광효율·보수율 기준표는 파일 안 스크립트의 `DATA` 객체만 수정하면 된다.
+  - Vercel 배포: 저장소를 Vercel에 연결하면 이 계산기만 정적 페이지로 배포된다(사이트 루트 `/`). `vercel.json`이 빌드 때 `public/index.html`로 복사하고, `.vercelignore`가 Streamlit 앱 파일을 업로드에서 제외한다. Streamlit 앱은 Vercel에서 실행되지 않으므로 Render로 배포한다.

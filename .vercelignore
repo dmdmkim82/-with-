@@ -1,0 +1,5 @@
+# Vercel에는 가설 조명 계산기(정적 HTML)만 올린다.
+# Streamlit 앱(app.py, requirements.txt)은 Vercel에서 실행할 수 없으므로 업로드하지 않는다(Render로 배포).
+/*
+!/vercel.json
+!/*.html
